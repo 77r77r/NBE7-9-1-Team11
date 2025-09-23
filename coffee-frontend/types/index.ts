@@ -31,3 +31,9 @@ export type Product = {
     createdAt: string;
   };
   
+  export type User = {
+    email: string;
+    nickname: string;
+    address: string;
+    postal_code: string;
+  };
