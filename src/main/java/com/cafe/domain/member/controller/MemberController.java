@@ -1,13 +1,15 @@
 package com.cafe.domain.member.controller;
 
 import com.cafe.domain.member.dto.MemberDto;
+import com.cafe.domain.member.rsData.RsData;
 import com.cafe.domain.member.service.MemberService;
 import com.cafe.domain.member.entity.Member;
+import com.cafe.global.exception.ServiceException;
+import com.cafe.global.rq.Rq;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
-import org.hibernate.service.spi.ServiceException;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -20,15 +22,15 @@ public class MemberController {
 
     record JoinReqBody(
             @NotBlank
-            @Size(min = 2, max = 30)
+            @Size(min = 6, max = 30)
             String email,
 
             @NotBlank
-            @Size(min = 2, max = 30)
+            @Size(min = 4, max = 20)
             String password,
 
             @NotBlank
-            @Size(min = 2, max = 30)
+            @Size(min = 2, max = 12)
             String nickname,
 
             @NotBlank
@@ -38,15 +40,11 @@ public class MemberController {
             @NotBlank
             @Size(min = 2, max = 30)
             String postalCode
-
-
-    ) {
-    }
+    ) {}
 
     record JoinResBody(
             MemberDto memberDto
-    ) {
-    }
+    ) {}
 
     @PostMapping("/join")
     public RsData<MemberDto> join(
@@ -67,27 +65,25 @@ public class MemberController {
     record LoginReqBody(
             @NotBlank
             @Size(min = 2, max = 30)
-            String username,
+            String email,
 
             @NotBlank
             @Size(min = 2, max = 30)
             String password
-    ) {
-    }
+    ) {}
 
     record LoginResBody(
             MemberDto memberDto,
             String apiKey
-    ) {
-    }
+    ) {}
 
     @PostMapping("/login")
     public RsData<MemberDto> login(
             @RequestBody @Valid LoginReqBody reqBody
     ) {
 
-        Member member = memberService.findByUsername(reqBody.username).orElseThrow(
-                () -> new ServiceException("401-1", "존재하지 않는 아이디입니다.")
+        Member member = memberService.findByUsername(reqBody.email).orElseThrow(
+                () -> new ServiceException("401-1", "존재하지 않는 이메일입니다.")
         );
 
         if (!member.getPassword().equals(reqBody.password)) {
@@ -98,7 +94,7 @@ public class MemberController {
 
         return new RsData(
                 "200-1",
-                "%s님 환영합니다.".formatted(reqBody.username),
+                "%s님 환영합니다.".formatted(reqBody.email),
                 new LoginResBody(
                         new MemberDto(member),
                         member.getApiKey()
