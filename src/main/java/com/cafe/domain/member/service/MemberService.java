@@ -19,14 +19,14 @@ public class MemberService {
         return memberRepository.count();
     }
 
-    public Member join(String username, String password, String nickname) {
+    public Member join(String username, String password, String nickname, String email, String postalCode) {
 
         memberRepository.findByUsername(username)
                 .ifPresent(m -> {
                     throw new ServiceException("409-1", "이미 사용중인 아이디입니다.");
                 });
 
-        Member member = new Member(username, password, nickname);
+        Member member = new Member(username, password, nickname, email, postalCode);
         return memberRepository.save(member);
     }
 

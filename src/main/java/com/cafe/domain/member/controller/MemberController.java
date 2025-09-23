@@ -29,7 +29,17 @@ public class MemberController {
 
             @NotBlank
             @Size(min = 2, max = 30)
-            String nickname
+            String nickname,
+
+            @NotBlank
+            @Size(min = 2, max = 30)
+            String address,
+
+            @NotBlank
+            @Size(min = 2, max = 30)
+            String postalCode
+
+
     ) {
     }
 
@@ -42,7 +52,7 @@ public class MemberController {
     public RsData<MemberDto> join(
             @RequestBody @Valid JoinReqBody reqBody
     ) {
-        Member member = memberService.join(reqBody.email, reqBody.password, reqBody.nickname);
+        Member member = memberService.join(reqBody.email, reqBody.password, reqBody.nickname, reqBody.address, reqBody.postalCode);
 
         return new RsData(
                 "201-1",

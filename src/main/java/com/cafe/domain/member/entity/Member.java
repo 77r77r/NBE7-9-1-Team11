@@ -26,13 +26,17 @@ public class Member {
     private String email;
     private String password;
     private String nickname;
+    private String address;
+    private String postalCode;
     @Column(unique = true)
     private String apiKey;
 
-    public Member(String email, String password, String nickname) {
+    public Member(String email, String password, String nickname, String address, String postalCode) {
         this.email = email;
         this.password = password;
         this.nickname = nickname;
+        this.address = address;
+        this.postalCode = postalCode;
         this.apiKey = UUID.randomUUID().toString();
     }
 
