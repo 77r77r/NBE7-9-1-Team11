@@ -15,10 +15,10 @@
 * 상태 저장: `localStorage` (장바구니, 이메일)
 * 시간대 처리: 표준 JS로 KST(UTC+9) 변환
 
-## 프로젝트 구조
+## 프로젝트 구조 (프론트)
 
 ```
-project-root/
+Coffee-Frontend/
 ├─ app/
 │  ├─ page.tsx                # 메인(상품 목록 + 장바구니 요약 + 새로고침)
 │  ├─ order/
