@@ -7,6 +7,8 @@ import { fetchProducts, createOrder } from "@/lib/api";
 import ProductList from "@/components/ProductList";
 import CartSummary from "@/components/CartSummary";
 import RefreshButton from "@/components/RefreshButton";
+import AuthBar from "@/components/AuthBar"; // ✅ 추가
+
 
 export default function Page() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -33,16 +35,32 @@ export default function Page() {
 
   return (
     <main className="container-fluid p-4">
-      <div className="row justify-content-center m-2">
-        <h1 className="text-center col">Grids & Circle</h1>
-        <div className="col-auto"><RefreshButton onClick={load} label="상품 새로고침" /></div>
+      {/* 상단 타이틀 + AuthBar */}
+      <div className="row justify-content-between align-items-center m-2">
+        <h1 className="col-auto">Grids & Circle</h1>
+        <div className="col-auto">
+          <AuthBar /> {/* ✅ 로그인/회원가입 버튼 표시 */}
+        </div>
       </div>
 
+      {/* 새로고침 버튼 */}
+      <div className="row mb-2">
+        <div className="col-auto">
+          <RefreshButton onClick={load} label="상품 새로고침" />
+        </div>
+      </div>
+
+      {/* 본문 */}
       <div className="row card p-3" style={{ borderRadius: "1rem" }}>
         <div className="col-md-8">
           <ProductList products={products} onAdd={add} />
         </div>
-        <CartSummary products={products} items={items} setItems={setItems} onCheckout={onCheckout} />
+        <CartSummary
+          products={products}
+          items={items}
+          setItems={setItems}
+          onCheckout={onCheckout}
+        />
       </div>
     </main>
   );
