@@ -1,0 +1,24 @@
+package com.cafe.demo.domain.product.product.entity;
+
+import com.cafe.demo.global.jpa.entity.BaseEntity;
+import jakarta.persistence.Entity;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+@Entity
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+public class Product extends BaseEntity {
+
+    private String productName;    // 상품명
+    private int productPrice;  // 가격
+
+    @Override
+    public String toString() {
+        return "{ 상품명: " + this.productName + ", 가격: " + this.productPrice + " }";
+    }
+
+
+}
