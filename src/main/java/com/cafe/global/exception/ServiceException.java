@@ -1,5 +1,8 @@
 package com.cafe.global.exception;
 
+import lombok.Getter;
+
+@Getter
 public class ServiceException extends RuntimeException {
 
     private String resultCode;

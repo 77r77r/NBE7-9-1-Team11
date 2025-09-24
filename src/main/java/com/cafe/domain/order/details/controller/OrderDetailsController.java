@@ -1,6 +1,6 @@
 package com.cafe.domain.order.details.controller;
 
-import com.cafe.domain.member.entity.Member;
+import com.cafe.domain.member.member.entity.Member;
 import com.cafe.domain.order.details.dto.OrderDto;
 import com.cafe.domain.order.details.service.OrderDetailsService;
 import com.cafe.global.rq.Rq;

@@ -1,14 +1,12 @@
-package com.cafe.domain.member.service;
+package com.cafe.domain.member.member.service;
 
-import com.cafe.domain.member.repository.MemberRepository;
+import com.cafe.domain.member.member.repository.MemberRepository;
 import com.cafe.global.exception.ServiceException;
-import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.Map;
 import java.util.Optional;
-import com.cafe.domain.member.entity.Member;
+import com.cafe.domain.member.member.entity.Member;
 
 @Service
 @RequiredArgsConstructor

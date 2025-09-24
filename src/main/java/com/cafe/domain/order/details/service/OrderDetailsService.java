@@ -1,7 +1,7 @@
 package com.cafe.domain.order.details.service;
 
-import com.cafe.domain.member.entity.Member;
-import com.cafe.domain.member.repository.MemberRepository;
+import com.cafe.domain.member.member.entity.Member;
+import com.cafe.domain.member.member.repository.MemberRepository;
 import com.cafe.domain.order.details.dto.OrderDto;
 import com.cafe.domain.order.order.entity.Order;
 import com.cafe.domain.order.order.repository.OrderRepository;

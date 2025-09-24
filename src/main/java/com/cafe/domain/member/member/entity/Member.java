@@ -1,13 +1,14 @@
-package com.cafe.domain.member.entity;
+package com.cafe.domain.member.member.entity;
 
 import com.cafe.domain.order.order.entity.Order;
-import jakarta.persistence.*;
+import com.cafe.global.jpa.entity.BaseEntity;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.OneToMany;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -15,15 +16,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @Getter
 @Entity
-public class Member {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    @CreatedDate
-    private LocalDateTime createDate;
-    @LastModifiedDate
-    private LocalDateTime modifyDate;
+public class Member extends BaseEntity {
 
     @Column(unique = true)
     private String email;
@@ -59,7 +52,7 @@ public class Member {
     // 주문내역 추가, 주문 발생 시 member.addOrder(order)로 호출
     public void addOrder(Order order) {
         orders.add(order);
-//        order.setMember(this);
+        order.setMember(this);
     }
 
     public void modifyPassword(String password) { this.password = password; }
