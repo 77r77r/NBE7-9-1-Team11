@@ -1,5 +1,6 @@
 package com.cafe.domain.member.entity;
 
+import com.cafe.domain.order.order.entity.Order;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
@@ -9,6 +10,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @NoArgsConstructor
