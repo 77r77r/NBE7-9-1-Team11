@@ -1,7 +1,8 @@
-package com.cafe.domain.member.entity;
+package com.cafe.domain.member.member.entity;
 
+import com.cafe.domain.order.order.entity.CoffeeOrder;
+import com.cafe.global.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
@@ -9,16 +10,14 @@ import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @NoArgsConstructor
 @Getter
 @Entity
-public class Member {
+public class Member extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
     @CreatedDate
     private LocalDateTime createDate;
     @LastModifiedDate
@@ -35,7 +34,7 @@ public class Member {
     private String apiKey;
     // Member - Order (1:N) 양방향 매핑
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Order> orders = new ArrayList<>();
+    private List<CoffeeOrder> orders = new ArrayList<>();
 
     public Member(String email, String password, String nickname, String address, String postalCode) {
         this.email = email;
@@ -56,7 +55,7 @@ public class Member {
     }
 
     // 주문내역 추가, 주문 발생 시 member.addOrder(order)로 호출
-    public void addOrder(Order order) {
+    public void addOrder(CoffeeOrder order) {
         orders.add(order);
         order.setMember(this);
     }
