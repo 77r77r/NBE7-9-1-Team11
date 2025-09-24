@@ -1,7 +1,7 @@
 package com.cafe.domain.member.controller;
 
 import com.cafe.domain.member.dto.MemberDto;
-import com.cafe.domain.member.rsData.RsData;
+import com.cafe.global.rsData.RsData;
 import com.cafe.domain.member.service.MemberService;
 import com.cafe.domain.member.entity.Member;
 import com.cafe.global.exception.ServiceException;
@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/members")
+@RequestMapping("/members")
 public class MemberController {
 
     private final MemberService memberService;
@@ -54,7 +54,7 @@ public class MemberController {
 
         return new RsData(
                 "201-1",
-                "회원가입이 완료되었습니다. %s님 환영합니다.".formatted(reqBody.nickname),
+                "회원가입이 완료되었습니다. %s님 환영합니다!".formatted(reqBody.nickname),
                 new JoinResBody(
                         new MemberDto(member)
                 )
@@ -82,8 +82,8 @@ public class MemberController {
             @RequestBody @Valid LoginReqBody reqBody
     ) {
 
-        Member member = memberService.findByUsername(reqBody.email).orElseThrow(
-                () -> new ServiceException("401-1", "존재하지 않는 이메일입니다.")
+        Member member = memberService.findByEmail(reqBody.email).orElseThrow(
+                () -> new ServiceException("401-1", "이메일이 존재하지 않습니다.")
         );
 
         if (!member.getPassword().equals(reqBody.password)) {
@@ -94,7 +94,7 @@ public class MemberController {
 
         return new RsData(
                 "200-1",
-                "%s님 환영합니다.".formatted(reqBody.email),
+                "%s님 환영합니다!".formatted(reqBody.email),
                 new LoginResBody(
                         new MemberDto(member),
                         member.getApiKey()
@@ -114,20 +114,19 @@ public class MemberController {
     }
 
 
-    record MeResBody(
+    record MypageResBody(
             MemberDto memberDto
-    ) {
-    }
+    ) {}
 
-    @GetMapping("/me")
-    public RsData<MemberDto> me() {
+    @GetMapping("/mypage")
+    public RsData<MemberDto> Mypage() {
 
         Member actor = rq.getActor();
 
         return new RsData(
                 "200-1",
                 "OK",
-                new MeResBody(
+                new MypageResBody(
                         new MemberDto(actor)
                 )
         );

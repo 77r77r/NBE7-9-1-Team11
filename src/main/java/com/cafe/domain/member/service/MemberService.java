@@ -1,8 +1,8 @@
 package com.cafe.domain.member.service;
 
 import com.cafe.domain.member.repository.MemberRepository;
+import com.cafe.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
-import org.hibernate.service.spi.ServiceException;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -19,19 +19,19 @@ public class MemberService {
         return memberRepository.count();
     }
 
-    public Member join(String username, String password, String nickname, String email, String postalCode) {
+    public Member join(String email, String password, String nickname, String address, String postalCode) {
 
-        memberRepository.findByUsername(username)
+        memberRepository.findByEmail(email)
                 .ifPresent(m -> {
-                    throw new ServiceException("409-1", "이미 사용중인 아이디입니다.");
+                    throw new ServiceException("409-1", "이미 가입된 이메일입니다.");
                 });
 
-        Member member = new Member(username, password, nickname, email, postalCode);
+        Member member = new Member(email, password, nickname, address, postalCode);
         return memberRepository.save(member);
     }
 
-    public Optional<Member> findByUsername(String username) {
-        return memberRepository.findByUsername(username);
+    public Optional<Member> findByEmail(String email) {
+        return memberRepository.findByEmail(email);
     }
 
     public Optional<Member> findByApiKey(String apiKey) {

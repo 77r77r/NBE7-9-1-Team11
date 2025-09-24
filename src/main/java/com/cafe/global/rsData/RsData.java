@@ -1,4 +1,4 @@
-package com.cafe.domain.member.rsData;
+package com.cafe.global.rsData;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
