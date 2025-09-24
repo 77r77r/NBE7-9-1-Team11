@@ -35,3 +35,9 @@ out/
 
 ### VS Code ###
 .vscode/
+
+
+### custom
+.gitignore
+**/global/initData/
+*.db
