@@ -1,8 +1,7 @@
 package com.cafe.domain.product.product.service;
 
-import com.cafe.demo.domain.product.product.entity.Product;
-import com.cafe.demo.domain.product.product.repository.ProductRepository;
-import com.cafe.demo.domain.product.product.service.ProductService;
+import com.cafe.domain.product.product.entity.Product;
+import com.cafe.domain.product.product.repository.ProductRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,28 +24,10 @@ public class ProductServiceTest {
     @Autowired
     private ProductService productService;
 
-    @Test
-    @DisplayName("상품")
-    void t1() {
-        Product product = new Product("테스트상품", 1000);
-        System.out.println("product = " + product.toString());
-    }
-
-    @Test
-    @DisplayName("상품등록")
-    void t2() {
-        String pname = "테스트상품";
-        int pprice = 1000;
-
-        Product product = productService.register(pname, pprice);
-
-        assertThat(product.getProductName()).isEqualTo(pname);
-        assertThat(product.getProductPrice()).isEqualTo(pprice);
-    }
 
     @Test
     @DisplayName("상품수량확인")
-    void t3() {
+    void t1() {
         long count = productService.count();
         long rpcount = productRepository.count();
 
@@ -56,9 +37,10 @@ public class ProductServiceTest {
 
     @Test
     @DisplayName("상품목록가져오기")
-    void t4() {
+    void t2() {
         List<Product> products = productService.findAll();
         products.forEach(System.out::println);
         assertThat(products).isEqualTo(productRepository.findAll());
     }
+
 }
