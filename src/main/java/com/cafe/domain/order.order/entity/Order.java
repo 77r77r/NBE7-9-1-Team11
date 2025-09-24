@@ -1,5 +1,6 @@
 package com.cafe.domain.order.order.entity;
 
+import com.cafe.domain.member.entity.Member;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,6 +19,10 @@ public class Order {
     @Id
     @GeneratedValue
     private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "member_id")
+    private Member member;
 
     @Column(nullable = false)
     private String email;
