@@ -1,4 +1,4 @@
-package com.cafe.demo.global.jpa.entity;
+package com.cafe.global.jpa.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;

@@ -40,4 +40,4 @@ out/
 ### custom
 .gitignore
 **/global/initData/
-db_dev.mv.db
+*.db
