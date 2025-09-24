@@ -33,8 +33,5 @@ logging:
     org.hibernate.orm.jdbc.extract: TRACE
     org.springframework.transaction.interceptor: TRACE
 
-
-custom:
-  jwt:
-    expireSeconds: "#{1000L * 60 * 60 * 24 * 365}"
-    secretPattern: abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz1234567890
+app:
+  api-version: v1

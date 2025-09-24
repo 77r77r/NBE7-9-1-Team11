@@ -1,10 +1,15 @@
+export type OrderStatus = "PAID" | "PREPARING" | "SHIPPING" | "DELIVERED" | "CANCELLED";
+export type ShipCategory = "TODAY" | "TOMORROW";
+
 export type Product = {
-    id: string;
-    name: string;
-    origin: string;
-    price: number;
-    imageUrl: string;
-  };
+  id: string;
+  name: string;
+  origin: string;
+  price: number;
+  imageUrl: string;
+  stock?: number;
+  active?: boolean;
+};
   
   export type CartItem = {
     productId: string;
@@ -27,13 +32,17 @@ export type Product = {
     postcode: string;
     items: Array<{ productId: string; name: string; qty: number; price: number }>;
     total: number;
-    shipCategory: "TODAY" | "TOMORROW";
-    createdAt: string;
+    shipCategory: ShipCategory;
+    createdAt: string;   // 결제 시각
+    status: OrderStatus; // ← 추가
   };
   
+  export type Role = "user" | "admin";
+
   export type User = {
     email: string;
     nickname: string;
     address: string;
     postal_code: string;
+    role?: Role; // ← 추가 (기본 user, 관리자면 admin)
   };

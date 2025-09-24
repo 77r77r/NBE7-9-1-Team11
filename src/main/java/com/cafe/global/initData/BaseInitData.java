@@ -1,5 +1,7 @@
 package com.cafe.global.initData;
 
+import com.cafe.domain.member.entity.Member;
+import com.cafe.domain.member.service.MemberService;
 import com.cafe.domain.product.product.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,11 +22,28 @@ public class BaseInitData {
     @Autowired
     private ProductService productService;
 
+    private final MemberService memberService;
+    private static final String SYSTEM_EMAIL = "elon@musk.com";
+
     @Bean
     ApplicationRunner initDataRunner() {
         return args -> {
+            self.work1();
             self.productInitData(); // 상품 초기 데이터 등록
         };
+    }
+
+    @Transactional
+    public void work1() {
+        if(memberService.findByEmail(SYSTEM_EMAIL).isPresent()) {
+            return;
+        }
+
+        Member system = memberService.join(
+                "elon@musk.com", "mars7911", "일론 머스크",
+                "경기도 화성시", "12345"
+        );
+        system.grantAdmin();
     }
 
     /**
