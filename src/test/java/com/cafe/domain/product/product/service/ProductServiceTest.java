@@ -1,4 +1,4 @@
-package com.cafe.demo.domain.product.product.service.ProductTest;
+package com.cafe.domain.product.product.service;
 
 import com.cafe.demo.domain.product.product.entity.Product;
 import com.cafe.demo.domain.product.product.repository.ProductRepository;
