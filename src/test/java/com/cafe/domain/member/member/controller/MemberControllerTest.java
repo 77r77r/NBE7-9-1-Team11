@@ -78,4 +78,38 @@ public class MemberControllerTest {
                 .andExpect(jsonPath("$.data.memberDto.createDate").exists());
     }
 
+    @Test
+    @DisplayName("회원 가입, 이미 존재하는 이메일로 가입")
+    void t2() throws Exception {
+
+        String email = "elon@musk.com";
+        String password = "asdf1234!";
+        String nickname = "이 유 찬";
+        String address = "경기도 성남시 태평동 123-4";
+        String postalCode = "18572";
+
+        ResultActions resultActions = mvc
+                .perform(
+                        post("/api/%s/members/join".formatted(apiVersion))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                            "email": "%s",
+                                            "password": "%s",
+                                            "nickname": "%s",
+                                            "address": "%s",
+                                            "postalCode": "%s"
+                                        }
+                                        """.formatted(email, password, nickname, address, postalCode)
+                                )
+                )
+                .andDo(print());
+
+        resultActions
+                .andExpect(handler().handlerType(MemberController.class))
+                .andExpect(handler().methodName("join"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.resultCode").value("409-1"))
+                .andExpect(jsonPath("$.msg").value("이미 가입된 이메일입니다."));
+    }
 }
