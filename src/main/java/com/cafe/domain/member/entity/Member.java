@@ -1,6 +1,7 @@
 package com.cafe.domain.member.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
@@ -59,4 +60,12 @@ public class Member {
         orders.add(order);
         order.setMember(this);
     }
+
+    public void modifyPassword(String password) { this.password = password; }
+
+    public void modifyNickname(String nickname) { this.nickname = nickname; }
+
+    public void modifyAddress(String address) { this.address = address; }
+
+    public void modifyPostalCode(String postalCode) { this.postalCode = postalCode; }
 }

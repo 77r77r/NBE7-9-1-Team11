@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/members")
+@RequestMapping("/api/${app.api-version}/members")
 public class MemberController {
 
     private final MemberService memberService;
@@ -38,7 +38,7 @@ public class MemberController {
             String address,
 
             @NotBlank
-            @Size(min = 2, max = 30)
+            @Size(min = 5, max = 5)
             String postalCode
     ) {}
 
@@ -46,6 +46,7 @@ public class MemberController {
             MemberDto memberDto
     ) {}
 
+    // 회원가입
     @PostMapping("/join")
     public RsData<MemberDto> join(
             @RequestBody @Valid JoinReqBody reqBody
@@ -64,11 +65,11 @@ public class MemberController {
 
     record LoginReqBody(
             @NotBlank
-            @Size(min = 2, max = 30)
+            @Size(min = 6, max = 30)
             String email,
 
             @NotBlank
-            @Size(min = 2, max = 30)
+            @Size(min = 4, max = 20)
             String password
     ) {}
 
@@ -77,6 +78,7 @@ public class MemberController {
             String apiKey
     ) {}
 
+    // 로그인
     @PostMapping("/login")
     public RsData<MemberDto> login(
             @RequestBody @Valid LoginReqBody reqBody
@@ -102,6 +104,7 @@ public class MemberController {
         );
     }
 
+    // 로그아웃
     @DeleteMapping("/logout")
     public RsData<Void> logout() {
 
@@ -118,18 +121,48 @@ public class MemberController {
             MemberDto memberDto
     ) {}
 
+    // 마이페이지
     @GetMapping("/mypage")
-    public RsData<MemberDto> Mypage() {
+    public RsData<MemberDto> mypage() {
 
-        Member actor = rq.getActor();
+        Member member = rq.getMember();
 
         return new RsData(
                 "200-1",
                 "OK",
                 new MypageResBody(
-                        new MemberDto(actor)
+                        new MemberDto(member)
                 )
         );
     }
 
+    public record ModifyMemberInfoReqBody(
+            @Size(min = 4, max = 20)
+            String password,
+
+            @Size(min = 2, max = 12)
+            String nickname,
+
+            @Size(min = 2, max = 30)
+            String address,
+
+            @Size(min = 5, max = 5)
+            String postalCode
+    ) {}
+
+    // 회원정보 수정, Patch라서 수정할 정보만 넘겨줘도 됨
+    @PatchMapping("/mypage")
+    public RsData<MemberDto> modifyMemberInfo(
+            @RequestBody @Valid ModifyMemberInfoReqBody reqBody
+    ) {
+        Member member = rq.getMember();
+
+        memberService.ModifyMemberInfo(member, reqBody.password, reqBody.nickname, reqBody.address, reqBody.postalCode);
+
+        return new RsData<>(
+                "200-1",
+                "회원정보가 수정되었습니다.",
+                new MemberDto(member)
+        );
+    }
 }
