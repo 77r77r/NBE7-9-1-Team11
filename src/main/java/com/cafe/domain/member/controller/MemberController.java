@@ -38,7 +38,7 @@ public class MemberController {
             String address,
 
             @NotBlank
-            @Size(min = 2, max = 30)
+            @Size(min = 5, max = 5)
             String postalCode
     ) {}
 
@@ -46,6 +46,7 @@ public class MemberController {
             MemberDto memberDto
     ) {}
 
+    // 회원가입
     @PostMapping("/join")
     public RsData<MemberDto> join(
             @RequestBody @Valid JoinReqBody reqBody
@@ -64,11 +65,11 @@ public class MemberController {
 
     record LoginReqBody(
             @NotBlank
-            @Size(min = 2, max = 30)
+            @Size(min = 6, max = 30)
             String email,
 
             @NotBlank
-            @Size(min = 2, max = 30)
+            @Size(min = 4, max = 20)
             String password
     ) {}
 
@@ -77,6 +78,7 @@ public class MemberController {
             String apiKey
     ) {}
 
+    // 로그인
     @PostMapping("/login")
     public RsData<MemberDto> login(
             @RequestBody @Valid LoginReqBody reqBody
@@ -102,6 +104,7 @@ public class MemberController {
         );
     }
 
+    // 로그아웃
     @DeleteMapping("/logout")
     public RsData<Void> logout() {
 
@@ -118,8 +121,9 @@ public class MemberController {
             MemberDto memberDto
     ) {}
 
+    // 마이페이지
     @GetMapping("/mypage")
-    public RsData<MemberDto> Mypage() {
+    public RsData<MemberDto> mypage() {
 
         Member actor = rq.getActor();
 
