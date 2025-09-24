@@ -1,6 +1,7 @@
-package com.cafe.domain.member.entity;
+package com.cafe.domain.member.member.entity;
 
 import com.cafe.domain.order.order.entity.Order;
+import com.cafe.global.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
@@ -16,15 +17,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @Getter
 @Entity
-public class Member {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    @CreatedDate
-    private LocalDateTime createDate;
-    @LastModifiedDate
-    private LocalDateTime modifyDate;
+public class Member extends BaseEntity {
 
     @Column(unique = true)
     private String email;

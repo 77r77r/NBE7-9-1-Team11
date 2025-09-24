@@ -1,7 +1,7 @@
 package com.cafe.global.initData;
 
-import com.cafe.domain.member.entity.Member;
-import com.cafe.domain.member.service.MemberService;
+import com.cafe.domain.member.member.entity.Member;
+import com.cafe.domain.member.member.service.MemberService;
 import com.cafe.domain.product.product.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -1,9 +1,9 @@
-package com.cafe.domain.member.controller;
+package com.cafe.domain.member.member.controller;
 
-import com.cafe.domain.member.dto.MemberDto;
+import com.cafe.domain.member.member.dto.MemberDto;
 import com.cafe.global.rsData.RsData;
-import com.cafe.domain.member.service.MemberService;
-import com.cafe.domain.member.entity.Member;
+import com.cafe.domain.member.member.service.MemberService;
+import com.cafe.domain.member.member.entity.Member;
 import com.cafe.global.exception.ServiceException;
 import com.cafe.global.rq.Rq;
 import jakarta.validation.Valid;

@@ -1,9 +1,9 @@
-package com.cafe.domain.member.dto;
+package com.cafe.domain.member.member.dto;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-import com.cafe.domain.member.entity.Member;
+import com.cafe.domain.member.member.entity.Member;
 import com.cafe.domain.order.order.entity.Order;
 
 public record MemberDto(
