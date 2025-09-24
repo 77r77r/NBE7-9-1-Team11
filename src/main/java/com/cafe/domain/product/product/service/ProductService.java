@@ -1,7 +1,7 @@
-package com.cafe.demo.domain.product.product.service;
+package com.cafe.domain.product.product.service;
 
-import com.cafe.demo.domain.product.product.entity.Product;
-import com.cafe.demo.domain.product.product.repository.ProductRepository;
+import com.cafe.domain.product.product.entity.Product;
+import com.cafe.domain.product.product.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

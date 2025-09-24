@@ -1,7 +1,7 @@
-package com.cafe.demo.domain.product.product.controller;
+package com.cafe.domain.product.product.controller;
 
-import com.cafe.demo.domain.product.product.dto.ProductDto;
-import com.cafe.demo.domain.product.product.service.ProductService;
+import com.cafe.domain.product.product.dto.ProductDto;
+import com.cafe.domain.product.product.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;

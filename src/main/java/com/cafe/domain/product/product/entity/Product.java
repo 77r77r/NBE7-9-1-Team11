@@ -1,6 +1,6 @@
-package com.cafe.demo.domain.product.product.entity;
+package com.cafe.domain.product.product.entity;
 
-import com.cafe.demo.global.jpa.entity.BaseEntity;
+import com.cafe.global.global.jpa.entity.BaseEntity;
 import jakarta.persistence.Entity;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

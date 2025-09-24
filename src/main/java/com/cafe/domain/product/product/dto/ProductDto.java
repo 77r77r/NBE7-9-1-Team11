@@ -1,6 +1,6 @@
-package com.cafe.demo.domain.product.product.dto;
+package com.cafe.domain.product.product.dto;
 
-import com.cafe.demo.domain.product.product.entity.Product;
+import com.cafe.domain.product.product.entity.Product;
 
 public record ProductDto(
         Long id,
