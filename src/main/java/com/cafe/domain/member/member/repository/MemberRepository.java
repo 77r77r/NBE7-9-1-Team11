@@ -1,7 +1,7 @@
-package com.cafe.domain.member.repository;
+package com.cafe.domain.member.member.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import com.cafe.domain.member.entity.Member;
+import com.cafe.domain.member.member.entity.Member;
 
 import java.util.Optional;
 

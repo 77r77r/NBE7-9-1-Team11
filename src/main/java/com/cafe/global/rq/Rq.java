@@ -1,8 +1,8 @@
 package com.cafe.global.rq;
 
 
-import com.cafe.domain.member.entity.Member;
-import com.cafe.domain.member.service.MemberService;
+import com.cafe.domain.member.member.entity.Member;
+import com.cafe.domain.member.member.service.MemberService;
 import com.cafe.global.exception.ServiceException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
