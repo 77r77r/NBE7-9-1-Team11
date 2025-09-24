@@ -1,6 +1,6 @@
 package com.cafe.domain.member.member.entity;
 
-import com.cafe.domain.order.order.entity.CoffeeOrder;
+import com.cafe.domain.order.order.entity.Orders;
 import com.cafe.global.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -34,7 +34,7 @@ public class Member extends BaseEntity {
     private String apiKey;
     // Member - Order (1:N) 양방향 매핑
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<CoffeeOrder> orders = new ArrayList<>();
+    private List<Orders> ordersList = new ArrayList<>();
 
     public Member(String email, String password, String nickname, String address, String postalCode) {
         this.email = email;
@@ -55,8 +55,8 @@ public class Member extends BaseEntity {
     }
 
     // 주문내역 추가, 주문 발생 시 member.addOrder(order)로 호출
-    public void addOrder(CoffeeOrder order) {
-        orders.add(order);
+    public void addOrder(Orders order) {
+        ordersList.add(order);
         order.setMember(this);
     }
 
