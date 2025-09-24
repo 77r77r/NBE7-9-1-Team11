@@ -18,7 +18,7 @@ public class Rq {
     private final HttpServletRequest request;
     private final HttpServletResponse response;
 
-    public Member getActor() {
+    public Member getMember() {
 
         String apiKey = null;
         String authorization = request.getHeader("Authorization");

@@ -2,6 +2,7 @@ package com.cafe.domain.member.service;
 
 import com.cafe.domain.member.repository.MemberRepository;
 import com.cafe.global.exception.ServiceException;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -36,5 +37,28 @@ public class MemberService {
 
     public Optional<Member> findByApiKey(String apiKey) {
         return memberRepository.findByApiKey(apiKey);
+    }
+
+    public void ModifyMemberInfo(
+            Member member, String password, String nickname,
+            String address, String postalCode
+    ) {
+        // 수정할 필드만 업데이트
+        if (password != null) {
+            member.modifyPassword(password);
+        }
+
+        if (nickname != null) {
+            member.modifyNickname(nickname);
+        }
+
+        if (address != null) {
+            member.modifyAddress(address);
+        }
+
+        if (postalCode != null) {
+            member.modifyPostalCode(postalCode);
+        }
+
     }
 }
