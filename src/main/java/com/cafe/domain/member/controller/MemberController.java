@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/members")
+@RequestMapping("/api/v1/members")
 public class MemberController {
 
     private final MemberService memberService;
@@ -130,6 +130,35 @@ public class MemberController {
         return new RsData(
                 "200-1",
                 "OK",
+                new MypageResBody(
+                        new MemberDto(actor)
+                )
+        );
+    }
+
+    // 회원정보 수정, Patch라서 수정할 정보만 넘겨줘야 함
+    @PatchMapping("/mypage")
+    public RsData<MemberDto> modifyMemberInfo(
+            @RequestBody MemberDto memberDto
+    ) {
+
+        Member actor = rq.getActor();
+
+        if (memberDto.getEmail() != null) {
+            actor.setNickname(memberDto.getNickname());
+        }
+
+        if (memberDto.getAddress() != null) {
+            actor.setAddress(memberDto.getAddress());
+        }
+
+        if (memberDto.getPostalCode() != null) {
+            actor.setPostalCode(memberDto.getPostalCode());
+        }
+
+        return new RsData(
+                "200-1",
+                "회원정보가 수정되었습니다.",
                 new MypageResBody(
                         new MemberDto(actor)
                 )
