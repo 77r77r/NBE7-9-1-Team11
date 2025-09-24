@@ -27,6 +27,9 @@ export default function AuthBar() {
         </>
       ) : (
         <>
+          {user.role === "admin" && (
+            <Link className="btn btn-warning btn-sm me-2" href="/admin">관리자</Link> // ← 관리자만 보임
+          )}
           <span className="badge bg-primary">{user.nickname}</span>
           <Link className="btn btn-outline-dark btn-sm" href="/mypage">마이페이지</Link>
           <button className="btn btn-danger btn-sm" onClick={handleLogout}>로그아웃</button>
