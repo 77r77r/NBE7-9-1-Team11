@@ -1,5 +1,6 @@
 package com.cafe.domain.order.order.entity;
 
+import com.cafe.domain.member.member.entity.Member;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -37,4 +38,7 @@ public class Order {
 
     @LastModifiedDate
     private LocalDateTime updatedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Member member;
 }
