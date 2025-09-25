@@ -151,7 +151,8 @@ public class MemberController {
     ) {}
 
     record ModifyMemberInfoResBody(
-            MemberDto memberDto
+            MemberDto memberDto,
+            String password
     ) {}
 
     // 회원정보 수정, Patch라서 수정할 정보만 넘겨줘도 됨
@@ -167,7 +168,8 @@ public class MemberController {
                 "200-1",
                 "회원정보가 수정되었습니다.",
                 new ModifyMemberInfoResBody(
-                    new MemberDto(member)
+                        new MemberDto(member),
+                        member.getPassword()
                 )
         );
     }
