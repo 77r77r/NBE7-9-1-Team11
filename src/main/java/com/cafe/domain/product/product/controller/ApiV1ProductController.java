@@ -1,13 +1,12 @@
 package com.cafe.domain.product.product.controller;
 
 import com.cafe.domain.product.product.dto.ProductDto;
+import com.cafe.domain.product.product.entity.Product;
 import com.cafe.domain.product.product.service.ProductService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -26,6 +25,27 @@ public class ApiV1ProductController {
         return productService.findAll().stream()
                 .map(ProductDto::new)
                 .toList();
+    }
+
+
+    record ProductCreateReqBody(
+            String name,
+            String origin,
+            int price,
+            int stock,
+            String imageUrl
+    ) {}
+
+    @PostMapping
+    @Transactional
+    @ResponseBody
+    @ResponseStatus(HttpStatus.CREATED)
+    public ProductDto createItem(
+            @RequestBody ProductCreateReqBody reqBody
+    ) {
+        Product product = productService.register(reqBody.name, reqBody.price, reqBody.origin, reqBody.stock, reqBody.imageUrl);
+
+        return new ProductDto(product);
     }
 
 }

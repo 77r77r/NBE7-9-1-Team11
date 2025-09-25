@@ -14,12 +14,8 @@ public class ProductService {
     private final ProductRepository productRepository;
 
 
-    public Product register(String productName, int productPrice, String origin, int stock) {
-        return productRepository.save(new Product(productName, productPrice, origin, stock));
-    }
-
-    public Product register(String productName, int productPrice, String origin) {
-        return productRepository.save(new Product(productName, productPrice, origin, 0));
+    public Product register(String productName, int productPrice, String origin, int stock, String imgUrl) {
+        return productRepository.save(new Product(productName, productPrice, origin, stock, imgUrl));
     }
 
 

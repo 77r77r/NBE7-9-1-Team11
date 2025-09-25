@@ -7,7 +7,8 @@ public record ProductDto(
         String name,
         String origin,
         int price,
-        int stock
+        int stock,
+        String imageUrl
 ) {
     public ProductDto(Product product) {
         this(
@@ -15,7 +16,8 @@ public record ProductDto(
                 product.getProductName(),
                 product.getProductOrigin(),
                 product.getProductPrice(),
-                product.getProductStock()
+                product.getProductStock(),
+                product.getImageUrl()
         );
     }
 }
