@@ -12,13 +12,13 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/product")
+@RequestMapping("/api/v1")
 public class ApiV1ProductController {
 
     private final ProductService productService;
 
     // 상품 가져오기
-    @GetMapping("/list")
+    @GetMapping("/product/list")
     @Transactional(readOnly = true)
     @ResponseBody
     public List<ProductDto> getItems() {
