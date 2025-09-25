@@ -3,13 +3,9 @@ package com.cafe.domain.member.member.entity;
 import com.cafe.domain.order.order.entity.Order;
 import com.cafe.global.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
