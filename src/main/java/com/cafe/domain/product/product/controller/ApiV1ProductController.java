@@ -36,7 +36,7 @@ public class ApiV1ProductController {
             String imageUrl
     ) {}
 
-    @PostMapping
+    @PostMapping("/admin/products")
     @Transactional
     @ResponseBody
     @ResponseStatus(HttpStatus.CREATED)
