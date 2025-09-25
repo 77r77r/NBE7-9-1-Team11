@@ -33,7 +33,7 @@ public class OrderDetailsController {
 
         if (orders.isEmpty()) {
             return new RsData<>(
-                    "204-1",
+                    "200-4", //204가 맞는데 204로 하면 스프링이 body 삭제함
                     "주문 내역이 존재하지 않습니다."
             );
         }
@@ -51,7 +51,7 @@ public class OrderDetailsController {
 
         if (orders.isEmpty()) {
             return new RsData<>(
-                    "204-2",
+                    "200-5",
                     "해당 이메일의 주문 내역이 존재하지 않습니다."
             );
         }
