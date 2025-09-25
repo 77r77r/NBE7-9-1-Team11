@@ -3,10 +3,12 @@ package com.cafe.domain.order.order.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @NoArgsConstructor
 @Getter
+@Setter
 public class OrderItem {
 
     @Id @GeneratedValue
@@ -26,7 +28,7 @@ public class OrderItem {
         return oi;
     }
 
-    void setOrder(Order order) {
+    public void setOrder(Order order) {
         this.order = order;
     }
 }
