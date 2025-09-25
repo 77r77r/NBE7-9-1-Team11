@@ -38,6 +38,5 @@ out/
 
 
 ### custom
-.gitignore
-**/global/initData/
 *.db
+
