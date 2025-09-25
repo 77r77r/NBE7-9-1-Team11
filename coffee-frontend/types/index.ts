@@ -41,8 +41,9 @@ export type Product = {
 
   export type User = {
     email: string;
-    nickname: string;
+    nickname: string;     // ← backend name
     address: string;
-    postal_code: string;
-    role?: Role; // ← 추가 (기본 user, 관리자면 admin)
+    postal_code: string;  // ← backend postalCode
+    role?: Role;          // ← backend authority
+    apiKey?: string;      // ← backend apiKey
   };
