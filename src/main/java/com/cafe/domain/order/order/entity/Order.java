@@ -1,6 +1,7 @@
 package com.cafe.domain.order.order.entity;
 
 import com.cafe.domain.member.member.entity.Member;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -43,8 +44,9 @@ public class Order {
 
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JsonIgnore
     private Member member;
 
-    @OneToMany(mappedBy = "order", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<OrderItem> orderItems = new ArrayList<>();
 }
