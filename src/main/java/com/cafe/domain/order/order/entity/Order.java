@@ -1,6 +1,7 @@
 package com.cafe.domain.order.order.entity;
 
-import com.cafe.domain.member.entity.Member;
+import com.cafe.domain.member.member.entity.Member;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -9,6 +10,8 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @NoArgsConstructor
@@ -20,9 +23,6 @@ public class Order {
     @GeneratedValue
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_id")
-    private Member member;
 
     @Column(nullable = false)
     private String email;
@@ -42,4 +42,13 @@ public class Order {
 
     @LastModifiedDate
     private LocalDateTime updatedAt;
+
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "member_id")
+    private Member member;
+
+
+    @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<OrderItem> orderItems = new ArrayList<>();
 }

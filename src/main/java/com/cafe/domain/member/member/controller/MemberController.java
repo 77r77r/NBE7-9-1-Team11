@@ -1,9 +1,9 @@
-package com.cafe.domain.member.controller;
+package com.cafe.domain.member.member.controller;
 
-import com.cafe.domain.member.dto.MemberDto;
+import com.cafe.domain.member.member.dto.MemberDto;
 import com.cafe.global.rsData.RsData;
-import com.cafe.domain.member.service.MemberService;
-import com.cafe.domain.member.entity.Member;
+import com.cafe.domain.member.member.service.MemberService;
+import com.cafe.domain.member.member.entity.Member;
 import com.cafe.global.exception.ServiceException;
 import com.cafe.global.rq.Rq;
 import jakarta.validation.Valid;
@@ -96,7 +96,7 @@ public class MemberController {
 
         return new RsData(
                 "200-1",
-                "%s님 환영합니다!".formatted(reqBody.email),
+                "%s님 환영합니다!".formatted(member.getName()),
                 new LoginResBody(
                         new MemberDto(member),
                         member.getApiKey()
@@ -136,7 +136,7 @@ public class MemberController {
         );
     }
 
-    public record ModifyMemberInfoReqBody(
+    record ModifyMemberInfoReqBody(
             @Size(min = 4, max = 20)
             String password,
 
@@ -150,6 +150,11 @@ public class MemberController {
             String postalCode
     ) {}
 
+    record ModifyMemberInfoResBody(
+            MemberDto memberDto,
+            String password
+    ) {}
+
     // 회원정보 수정, Patch라서 수정할 정보만 넘겨줘도 됨
     @PatchMapping("/mypage")
     public RsData<MemberDto> modifyMemberInfo(
@@ -159,10 +164,13 @@ public class MemberController {
 
         memberService.ModifyMemberInfo(member, reqBody.password, reqBody.nickname, reqBody.address, reqBody.postalCode);
 
-        return new RsData<>(
+        return new RsData(
                 "200-1",
                 "회원정보가 수정되었습니다.",
-                new MemberDto(member)
+                new ModifyMemberInfoResBody(
+                        new MemberDto(member),
+                        member.getPassword()
+                )
         );
     }
 }
