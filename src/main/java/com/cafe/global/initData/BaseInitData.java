@@ -1,7 +1,13 @@
 package com.cafe.global.initData;
 
 import com.cafe.domain.member.member.entity.Member;
+import com.cafe.domain.member.member.repository.MemberRepository;
 import com.cafe.domain.member.member.service.MemberService;
+import com.cafe.domain.order.order.entity.Order;
+import com.cafe.domain.order.order.entity.OrderItem;
+import com.cafe.domain.order.order.repository.OrderRepository;
+import com.cafe.domain.product.product.entity.Product;
+import com.cafe.domain.product.product.repository.ProductRepository;
 import com.cafe.domain.product.product.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +16,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Configuration
 @RequiredArgsConstructor
@@ -20,15 +29,24 @@ public class BaseInitData {
     private BaseInitData self;
 
     @Autowired
+    private final MemberService memberService;
+    @Autowired
+    private final MemberRepository memberRepository;
+    private final ProductRepository productRepository;
+    private final OrderRepository orderRepository;
+
+
+
+    @Autowired
     private ProductService productService;
 
-    private final MemberService memberService;
 
     @Bean
     ApplicationRunner initDataRunner() {
         return args -> {
             self.memberInitData();  // 회원 초기 데이터 등록
             self.productInitData(); // 상품 초기 데이터 등록
+            self.orderInitData();
         };
     }
 
@@ -54,9 +72,7 @@ public class BaseInitData {
 
     }
 
-    /**
-     * 상품 초기데이터 등록
-     */
+
     @Transactional
     public void productInitData() {
         if (productService.count() > 0) return;
@@ -67,4 +83,37 @@ public class BaseInitData {
         productService.register("Ethiopia Yirgacheffe", 6800, "에티오피아", 40, "https://oasisprodproduct.edge.naverncp.com/5737/detail/detail_5737_0_27ef8aaf-c7b8-47b8-94c8-16a78651d0f5.jpg");
     }
 
+    @Transactional
+    public void orderInitData() {
+        if (orderRepository.count() > 0) return;
+
+        Member member = memberRepository.findByEmail("gen@init.com").get();
+        List<Product> products = productRepository.findAll();
+
+        Product product1 = products.get(0);
+        Product product2 = products.get(1);
+
+        Order order = new Order();
+        order.setAddress(member.getAddress());
+        order.setMember(member);
+        order.setStatus("배송준비중");
+        order.setCreatedAt(LocalDateTime.now());
+
+        OrderItem item1 = new OrderItem();
+        item1.setOrder(order);
+        item1.setProduct(product1);
+        item1.setQuantity(2);
+
+        OrderItem item2 = new OrderItem();
+        item2.setOrder(order);
+        item2.setProduct(product2);
+        item2.setQuantity(1);
+
+        order.setOrderItems(List.of(item1, item2));
+
+
+
+        orderRepository.save(order);
+        }
 }
+
