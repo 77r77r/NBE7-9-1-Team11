@@ -1,10 +1,10 @@
 package com.cafe.domain.member.member.dto;
 
-import java.time.LocalDateTime;
-import java.util.List;
-
 import com.cafe.domain.member.member.entity.Member;
 import com.cafe.domain.order.order.entity.Order;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 public record MemberDto(
         Long id,
@@ -13,6 +13,7 @@ public record MemberDto(
         String address,
         String postalCode,
         List<Order> orders,
+        String authority,
         LocalDateTime createDate,
         LocalDateTime modifyDate
 
@@ -25,6 +26,7 @@ public record MemberDto(
                 member.getAddress(),
                 member.getPostalCode(),
                 member.getOrders(),
+                member.getAuthority(),
                 member.getCreateDate(),
                 member.getModifyDate()
         );
