@@ -94,6 +94,8 @@ public class BaseInitData {
         Product product2 = products.get(1);
 
         Order order = new Order();
+        order.setEmail(member.getEmail());
+        order.setZipcode(member.getPostalCode());
         order.setAddress(member.getAddress());
         order.setMember(member);
         order.setStatus("배송준비중");
