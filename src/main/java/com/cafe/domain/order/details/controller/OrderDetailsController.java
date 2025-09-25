@@ -8,6 +8,7 @@ import com.cafe.global.rsData.RsData;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -24,7 +25,7 @@ public class OrderDetailsController {
             List<OrderDto> orderDto
     ) {}
 
-    @GetMapping("/details")
+    @GetMapping("/member/details")
     public RsData<OrderDetailsResBody> getOrderDetails() {
         Member actor = rq.getMember();
 
@@ -44,5 +45,22 @@ public class OrderDetailsController {
         );
     }
 
+    @GetMapping("/details")
+    public RsData<OrderDetailsResBody> getOrderDetailsByEmail(@RequestParam String email) {
+        List<OrderDto> orders = orderDetailsService.getOrdersByEmail(email);
+
+        if (orders.isEmpty()) {
+            return new RsData<>(
+                    "204-2",
+                    "해당 이메일의 주문 내역이 존재하지 않습니다."
+            );
+        }
+
+        return new RsData<>(
+                "200-2",
+                "주문 내역 조회 성공",
+                new OrderDetailsResBody(orders)
+        );
+    }
 
 }

@@ -32,4 +32,13 @@ public class OrderDetailsService {
                 .map(OrderDto::new)
                 .toList();
     }
+
+    public List<OrderDto> getOrdersByEmail(String email) {
+        return memberRepository.findByEmail(email)
+                .map(member -> orderRepository.findByMember(member))
+                .orElseGet(() -> orderRepository.findByEmail(email))
+                .stream()
+                .map(OrderDto::new)
+                .toList();
+    }
 }

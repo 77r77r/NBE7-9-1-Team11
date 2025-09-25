@@ -28,17 +28,15 @@ public class BaseInitData {
     @Lazy
     private BaseInitData self;
 
-    @Autowired
+//    @Autowired
     private final MemberService memberService;
-    @Autowired
     private final MemberRepository memberRepository;
     private final ProductRepository productRepository;
     private final OrderRepository orderRepository;
 
 
 
-    @Autowired
-    private ProductService productService;
+    private final ProductService productService;
 
 
     @Bean
@@ -87,11 +85,12 @@ public class BaseInitData {
     public void orderInitData() {
         if (orderRepository.count() > 0) return;
 
-        Member member = memberRepository.findByEmail("gen@init.com").get();
         List<Product> products = productRepository.findAll();
-
         Product product1 = products.get(0);
         Product product2 = products.get(1);
+
+        // 회원
+        Member member = memberRepository.findByEmail("gen@init.com").get();;
 
         Order order = new Order();
         order.setEmail(member.getEmail());
@@ -113,9 +112,27 @@ public class BaseInitData {
 
         order.setOrderItems(List.of(item1, item2));
 
-
-
         orderRepository.save(order);
+
+
+        // 비회원 주문
+        Order guestOrder = new Order();
+        guestOrder.setEmail("guest@init.com");
+        guestOrder.setZipcode("12345");
+        guestOrder.setAddress("서울시 강남구 테헤란로 123");
+        guestOrder.setMember(null);
+        guestOrder.setStatus("결제완료");
+        guestOrder.setCreatedAt(LocalDateTime.now());
+
+        OrderItem guestItem = new OrderItem();
+        guestItem.setOrder(guestOrder);
+        guestItem.setProduct(product2);
+        guestItem.setQuantity(3);
+
+        guestOrder.setOrderItems(List.of(guestItem));
+
+        orderRepository.save(guestOrder);
         }
+
 }
 
