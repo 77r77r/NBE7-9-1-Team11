@@ -8,6 +8,7 @@ import ProductList from "@/components/ProductList";
 import CartSummary from "@/components/CartSummary";
 import RefreshButton from "@/components/RefreshButton";
 import AuthBar from "@/components/AuthBar"; // ✅ 추가
+import GuestOrderLookup from "@/components/GuestOrderLookup";
 
 
 export default function Page() {
@@ -62,6 +63,7 @@ export default function Page() {
           onCheckout={onCheckout}
         />
       </div>
+      <GuestOrderLookup />
     </main>
   );
 }
