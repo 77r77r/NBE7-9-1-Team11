@@ -18,6 +18,10 @@ public class ProductService {
         return productRepository.save(new Product(productName, productPrice, origin, stock, imgUrl));
     }
 
+    public Product register(Product product) {
+        return productRepository.save(product);
+    }
+
 
     public long count() {
         return productRepository.count();
@@ -27,4 +31,9 @@ public class ProductService {
     public List<Product> findAll() {
         return productRepository.findAll();
     }
+
+    public boolean existsByProductName(String name) {
+        return productRepository.existsByProductName(name);
+    }
+
 }
