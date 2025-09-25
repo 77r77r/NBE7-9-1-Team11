@@ -87,7 +87,7 @@ public class BaseInitData {
     public void orderInitData() {
         if (orderRepository.count() > 0) return;
 
-        Member member = memberRepository.findByEmail("elon@musk.com").get();
+        Member member = memberRepository.findByEmail("gen@init.com").get();
         List<Product> products = productRepository.findAll();
 
         Product product1 = products.get(0);
