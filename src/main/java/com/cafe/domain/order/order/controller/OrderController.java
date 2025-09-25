@@ -21,7 +21,7 @@ public class OrderController {
     // 이메일/주소/우편번호를 받아 주문 생성
     @PostMapping
     public ResponseEntity<OrderResponse> create(@Valid @RequestBody OrderCreateRequest req) {
-        return ResponseEntity.ok(orderService.createOrder(req.getEmail(), req.getAddress(), req.getZipcode()));
+        return ResponseEntity.ok(orderService.create(req));
     }
 
     // 단건
