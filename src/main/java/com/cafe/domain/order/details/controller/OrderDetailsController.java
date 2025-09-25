@@ -20,6 +20,10 @@ public class OrderDetailsController {
     private final OrderDetailsService orderDetailsService;
     private final Rq rq;
 
+    public record OrderDetailsResBody(
+            List<OrderDto> orderDto
+    ) {}
+
     @GetMapping("/details")
     public RsData<?> getOrderDetails() {
         Member actor = rq.getMember();
@@ -36,7 +40,7 @@ public class OrderDetailsController {
         return new RsData<>(
                 "200-1",
                 "주문 내역 조회 성공",
-                orders
+                new OrderDetailsResBody(orders)
         );
     }
 
