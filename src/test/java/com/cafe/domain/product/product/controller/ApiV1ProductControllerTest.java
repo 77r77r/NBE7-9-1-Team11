@@ -1,4 +1,4 @@
-package com.cafe.domain.product.product.product.controller;
+package com.cafe.domain.product.product.controller;
 
 import com.cafe.domain.product.product.repository.ProductRepository;
 import org.junit.jupiter.api.DisplayName;
