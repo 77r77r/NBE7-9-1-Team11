@@ -2,10 +2,7 @@ package com.cafe.domain.member.member.entity;
 
 import com.cafe.domain.order.order.entity.Order;
 import com.cafe.global.jpa.entity.BaseEntity;
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
