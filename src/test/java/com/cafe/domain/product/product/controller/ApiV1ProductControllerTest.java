@@ -91,4 +91,7 @@ public class ApiV1ProductControllerTest {
                 .andExpect(jsonPath("$.imageUrl").value(imageUrl));
 
     }
+
+    // 삭제 기능 -> 피쳐/삭제
+    // 수정 기능 -> 피쳐/수정
 }
