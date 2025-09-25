@@ -11,7 +11,7 @@ public record OrderItemDto(
         this(
                 orderItem.getProduct().getProductName(),
                 orderItem.getQuantity(),
-                orderItem.getProduct().getProductPrice()
+                orderItem.getProduct().getProductPrice() * orderItem.getQuantity()
         );
     }
 }
