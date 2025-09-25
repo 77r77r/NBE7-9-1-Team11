@@ -25,7 +25,7 @@ public class OrderDetailsController {
     ) {}
 
     @GetMapping("/details")
-    public RsData<?> getOrderDetails() {
+    public RsData<OrderDetailsResBody> getOrderDetails() {
         Member actor = rq.getMember();
 
         List<OrderDto> orders = orderDetailsService.getOrdersByApiKey(actor.getApiKey());
