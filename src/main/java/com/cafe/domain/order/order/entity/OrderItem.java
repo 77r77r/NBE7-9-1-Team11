@@ -1,25 +1,32 @@
 package com.cafe.domain.order.order.entity;
 
-import com.cafe.domain.product.product.entity.Product;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.NoArgsConstructor;
 
 @Entity
+@NoArgsConstructor
 @Getter
-@Setter
 public class OrderItem {
 
-    @Id
-    @GeneratedValue
+    @Id @GeneratedValue
     private Long id;
 
-    @ManyToOne
-    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "order_id")
     private Order order;
 
-    @ManyToOne
-    private Product product;
+    private Long productId;
     private int quantity;
+
+    public static OrderItem of(Long productId, int quantity) {
+        OrderItem oi = new OrderItem();
+        oi.productId = productId;
+        oi.quantity = quantity;
+        return oi;
+    }
+
+    void setOrder(Order order) {
+        this.order = order;
+    }
 }

@@ -52,7 +52,12 @@ export default function AdminPage() {
   // 상품 CRUD 핸들러
   async function createProduct() {
     const np = await adminCreateProduct({
-      name: "New Coffee", origin: "Unknown", price: 5000, imageUrl: "https://i.imgur.com/HKOFQYa.jpeg", stock: 10, active: true
+      productname: "New Coffee",
+      origin: "Unknown",
+      productPrice: 5000,
+      imgUrl: "https://i.imgur.com/HKOFQYa.jpeg",
+      stock: 10,
+      active: true,
     });
     setProducts([np, ...products]);
   }

@@ -1,8 +1,10 @@
 package com.cafe.domain.order.order.service;
 
+import com.cafe.domain.order.order.dto.OrderCreateRequest;
 import com.cafe.domain.order.order.dto.OrderResponse;
 import com.cafe.domain.order.order.dto.OrderUpdateRequest;
 import com.cafe.domain.order.order.entity.Order;
+import com.cafe.domain.order.order.entity.OrderItem;
 import com.cafe.domain.order.order.repository.OrderRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -18,14 +20,22 @@ public class OrderService {
     private final OrderRepository orderRepository;
 
 
-    public OrderResponse createOrder(String email, String address, String zipCode) {
-        Order order = new Order();
-        order.setEmail(email);
-        order.setAddress(address);
-        order.setZipcode(zipCode);
-        if (order.getStatus() == null) order.setStatus("PENDING");
-        if (order.getTotalPrice() == null) order.setTotalPrice(0L);
-        return toResponse(orderRepository.save(order));
+    @Transactional
+    public OrderResponse create(OrderCreateRequest req) {
+        Order o = new Order();
+        o.setEmail(req.getEmail());
+        o.setAddress(req.getAddress());
+        o.setZipcode(req.getZipcode());
+        if (o.getStatus() == null) o.setStatus("PENDING");
+        if (o.getTotalPrice() == null) o.setTotalPrice(0L);
+
+        if (req.getItems() != null) {
+            req.getItems().forEach(it ->
+                    o.addItem(OrderItem.of(it.getProductId(), it.getQuantity()))
+            );
+        }
+
+        return toResponse(orderRepository.save(o));
     }
 
 

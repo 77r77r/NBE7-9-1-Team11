@@ -1,14 +1,18 @@
 "use client";
-
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { fetchMyPage, updateMyPage } from "@/lib/api";
 import { storage } from "@/lib/storage";
 import type { User } from "@/types";
-import { useEffect, useState } from "react";
 
 export default function MyPage() {
-  const [user, setUser] = useState<User | null>(null);
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(storage.getUser());
   const [msg, setMsg] = useState("");
 
-  useEffect(() => { setUser(storage.getUser()); }, []);
+  useEffect(() => {
+    fetchMyPage().then(setUser).catch(() => setUser(storage.getUser()));
+  }, []);
 
   if (!user) {
     return (
@@ -20,14 +24,23 @@ export default function MyPage() {
   }
 
   function onChange(e: React.ChangeEvent<HTMLInputElement>) {
+    if (!user) return;
     setUser({ ...user, [e.target.name]: e.target.value } as User);
   }
 
-  function save() {
+  async function save() {
     if (!user) return;
-    storage.setUser(user);
+    const saved = await updateMyPage({
+      nickname: user.nickname,
+      address: user.address,
+      postal_code: user.postal_code,
+    });
+    setUser(saved);
     setMsg("저장되었습니다.");
-    setTimeout(()=>setMsg(""), 1500);
+    setTimeout(() => {
+      setMsg("");
+      router.push("/");                // ✅ 저장 성공 후 메인 전환
+    }, 800);
   }
 
   return (
