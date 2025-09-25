@@ -51,7 +51,7 @@ let DUMMY_ORDERS: Order[] = [
 export async function fetchProducts(): Promise<Product[]> {
   if (!API) return [...DUMMY_PRODUCTS];
   try {
-    const r = await fetch(`${API}/products/list`, { cache: "no-store" });
+    const r = await fetch(`${API}/product/list`, { cache: "no-store" });
     if (!r.ok) throw 0;
     return await r.json();
   } catch {
