@@ -23,6 +23,7 @@ public class Order {
     @GeneratedValue
     private Long id;
 
+
     @Column(nullable = false)
     private String email;
 
@@ -44,9 +45,15 @@ public class Order {
 
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JsonIgnore
+    @JoinColumn(name = "member_id")
     private Member member;
+
 
     @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<OrderItem> orderItems = new ArrayList<>();
+
+    public void addItem(OrderItem item) {
+        item.setOrder(this);
+        orderItems.add(item);
+    }
 }
