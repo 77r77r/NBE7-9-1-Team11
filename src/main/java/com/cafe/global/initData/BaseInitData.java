@@ -23,7 +23,6 @@ public class BaseInitData {
     private ProductService productService;
 
     private final MemberService memberService;
-    private static final String SYSTEM_EMAIL = "elon@musk.com";
 
     @Bean
     ApplicationRunner initDataRunner() {
@@ -38,15 +37,21 @@ public class BaseInitData {
      */
     @Transactional
     public void memberInitData() {
-        if(memberService.findByEmail(SYSTEM_EMAIL).isPresent()) {
-            return;
-        }
+        if(memberService.count() > 0) return;
 
+        // 관리자 계정
         Member system = memberService.join(
-                "elon@musk.com", "mars7911", "일론 머스크",
+                "elon@init.com", "mars7911", "일론 머스크",
                 "경기도 화성시", "12345"
         );
         system.grantAdmin();
+
+        // 일반 사용자 계정
+        Member generalUser = memberService.join(
+                "gen@init.com", "mars7911", "일반 사용자",
+                "경기도 성남시 수정구 태평5동 123-4", "89425"
+        );
+
     }
 
     /**
