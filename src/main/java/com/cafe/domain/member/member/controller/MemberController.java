@@ -96,7 +96,7 @@ public class MemberController {
 
         return new RsData(
                 "200-1",
-                "%s님 환영합니다!".formatted(reqBody.email),
+                "%s님 환영합니다!".formatted(member.getNickname()),
                 new LoginResBody(
                         new MemberDto(member),
                         member.getApiKey()
