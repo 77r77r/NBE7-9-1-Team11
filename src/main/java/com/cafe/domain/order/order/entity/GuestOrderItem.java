@@ -24,13 +24,6 @@ public class GuestOrderItem {
 
     private int quantity;
 
-    public static GuestOrderItem of(Product product, int quantity) {
-        GuestOrderItem item = new GuestOrderItem();
-        item.product = product;
-        item.quantity = quantity;
-        return item;
-    }
-
     void setGuestOrder(GuestOrder guestOrder) {
         this.guestOrder = guestOrder;
     }

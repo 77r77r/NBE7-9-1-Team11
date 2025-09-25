@@ -25,13 +25,6 @@ public class OrderItem {
     private Product product;
     private int quantity;
 
-    public static OrderItem of(Product product, int quantity) {
-        OrderItem item = new OrderItem();
-        item.product = product;
-        item.quantity = quantity;
-        return item;
-    }
-
     void setOrder(Order order) {
         this.order = order;
     }
