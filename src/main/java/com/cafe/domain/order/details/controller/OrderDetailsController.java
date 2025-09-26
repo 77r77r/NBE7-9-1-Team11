@@ -1,6 +1,7 @@
 package com.cafe.domain.order.details.controller;
 
 import com.cafe.domain.member.member.entity.Member;
+import com.cafe.domain.order.details.dto.AllOrderDto;
 import com.cafe.domain.order.details.dto.OrderDto;
 import com.cafe.domain.order.details.service.OrderDetailsService;
 import com.cafe.global.rq.Rq;
@@ -62,5 +63,30 @@ public class OrderDetailsController {
                 new OrderDetailsResBody(orders)
         );
     }
+
+
+
+    public record AllOrdersResBody(List<AllOrderDto> orders) {}
+
+    @GetMapping("/all")
+    public RsData<AllOrdersResBody> getAllOrders() {
+        List<AllOrderDto> orders = orderDetailsService.getAllOrders();
+
+        if (orders.isEmpty()) {
+            return new RsData<>(
+                    "200-6",
+                    "등록된 주문이 없습니다."
+            );
+        }
+
+
+
+        return new RsData<>(
+                "200-7",
+                "모든 주문 조회 성공",
+                new AllOrdersResBody(orders)
+        );
+    }
+
 
 }
