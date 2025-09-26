@@ -201,7 +201,7 @@ export async function createOrder(draft: OrderDraft): Promise<{ ok: boolean; id?
     shipCategory: draft.shipCategory, // 서버에서 쓰면 전달
   };
 
-  const r = await fetch(join(API_BASE, "/order/order"), {
+  const r = await fetch(join(API_BASE, "/order"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
