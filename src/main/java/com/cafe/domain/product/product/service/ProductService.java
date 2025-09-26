@@ -33,11 +33,16 @@ public class ProductService {
         return productRepository.findAll();
     }
 
-    public boolean existsByProductName(String name) {
-        return productRepository.existsByProductName(name);
+    public boolean existsByProductName(String productName) {
+        return productRepository.existsByProductName(productName);
     }
 
-    public Optional<Product> findByName(String productName) {
-        return productRepository.findByName(productName);
+    public Optional<Product> findByProductName(String productName) {
+        return productRepository.findByProductName(productName);
     }
+
+    public void deleteProduct(Product product) {
+        productRepository.delete(product);
+    }
+
 }

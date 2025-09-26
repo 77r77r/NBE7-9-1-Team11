@@ -46,9 +46,8 @@ public class ApiV1ProductController {
     ) {
     }
 
-
     /**
-     * 상품 삭제
+     * 상품 생성
      * @param reqBody
      * @return
      */
@@ -56,36 +55,6 @@ public class ApiV1ProductController {
     @Transactional
     @ResponseBody
     @ResponseStatus(HttpStatus.CREATED)
-    public RsData<ProductResBody> deleteItem(
-            @RequestBody @Valid ProductReqBody reqBody
-    ) {
-
-        String rslt_cd = "999";
-        String rslt_msg = "";
-
-        if (productService.existsByProductName(reqBody.name)) {
-            rslt_cd = "409";
-            rslt_msg = "동일 상품명 존재";
-
-            return new RsData<>(
-                    rslt_cd,
-                    rslt_msg,
-                    new ProductResBody(
-                            new ProductDto(productService.findByName(reqBody.name).get())
-                    )
-            );
-
-        } else {
-            productService.register(new Product(reqBody.name, reqBody.price, reqBody.origin, reqBody.stock, reqBody.imageUrl));
-            rslt_cd = "201";
-            rslt_msg = "등록완료";
-        }
-    }
-
-    @PostMapping("/admin/products")
-    @Transactional
-    @ResponseBody
-    @ResponseStatus(HttpStatus.)
     public RsData<ProductResBody> createItem(
             @RequestBody @Valid ProductReqBody reqBody
     ) {
@@ -112,5 +81,40 @@ public class ApiV1ProductController {
         );
     }
 
+    /**
+     * 상품 삭제
+     *
+     * @param reqBody
+     * @return
+     */
+    @DeleteMapping("/admin/products")
+    @Transactional
+    @ResponseBody
+    public RsData<ProductResBody> deleteItem(
+            @RequestBody @Valid ProductReqBody reqBody
+    ) {
 
+        if (productService.existsByProductName(reqBody.name)) {
+
+            Product product = productService.findByProductName(reqBody.name).get();
+            productService.deleteProduct(product);
+
+            return new RsData<>(
+                    "200",
+                    "삭제되었습니다.",
+                    new ProductResBody(
+                            new ProductDto(product)
+                    )
+            );
+
+        } else {
+            return new RsData<>(
+                    "204",
+                    "해당 데이터 없음",
+                    new ProductResBody(
+                            null
+                    )
+            );
+        }
+    }
 }
