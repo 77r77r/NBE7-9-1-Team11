@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -18,6 +19,10 @@ public class ProductService {
         return productRepository.save(new Product(productName, productPrice, origin, stock, imgUrl));
     }
 
+    public Product register(Product product) {
+        return productRepository.save(product);
+    }
+
 
     public long count() {
         return productRepository.count();
@@ -27,4 +32,26 @@ public class ProductService {
     public List<Product> findAll() {
         return productRepository.findAll();
     }
+
+    public boolean existsById(Long id) {
+        return productRepository.existsById(id);
+    }
+
+    public boolean existsByProductName(String productName) {
+        return productRepository.existsByProductName(productName);
+    }
+
+    public Optional<Product> findById(Long id) {
+        return productRepository.findById(id);
+    }
+
+    public Optional<Product> findByProductName(String productName) {
+        return productRepository.findByProductName(productName);
+    }
+
+    public void deleteProduct(Product product) {
+        productRepository.delete(product);
+    }
+
+
 }
