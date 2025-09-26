@@ -3,9 +3,9 @@ package com.cafe.global.initData;
 import com.cafe.domain.member.member.entity.Member;
 import com.cafe.domain.member.member.repository.MemberRepository;
 import com.cafe.domain.member.member.service.MemberService;
-import com.cafe.domain.order.order.entity.Order;
-import com.cafe.domain.order.order.entity.OrderItem;
+import com.cafe.domain.order.order.dto.OrderCreateRequest;
 import com.cafe.domain.order.order.repository.OrderRepository;
+import com.cafe.domain.order.order.service.OrderService;
 import com.cafe.domain.product.product.entity.Product;
 import com.cafe.domain.product.product.repository.ProductRepository;
 import com.cafe.domain.product.product.service.ProductService;
@@ -17,7 +17,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Configuration
@@ -28,17 +27,12 @@ public class BaseInitData {
     @Lazy
     private BaseInitData self;
 
-    @Autowired
     private final MemberService memberService;
-    @Autowired
     private final MemberRepository memberRepository;
     private final ProductRepository productRepository;
     private final OrderRepository orderRepository;
-
-
-
-    @Autowired
-    private ProductService productService;
+    private final ProductService productService;
+    private final OrderService orderService;
 
 
     @Bean
@@ -87,35 +81,34 @@ public class BaseInitData {
     public void orderInitData() {
         if (orderRepository.count() > 0) return;
 
-        Member member = memberRepository.findByEmail("gen@init.com").get();
         List<Product> products = productRepository.findAll();
-
         Product product1 = products.get(0);
         Product product2 = products.get(1);
 
-        Order order = new Order();
-        order.setEmail(member.getEmail());
-        order.setZipcode(member.getPostalCode());
-        order.setAddress(member.getAddress());
-        order.setMember(member);
-        order.setStatus("배송준비중");
-        order.setCreatedAt(LocalDateTime.now());
+        // 회원 주문
+        OrderCreateRequest memberOrderRequest = new OrderCreateRequest(
+                "gen@init.com",
+                "경기도 성남시",
+                "89425",
+                List.of(
+                        new OrderCreateRequest.Item(product1.getId(), 2),
+                        new OrderCreateRequest.Item(product2.getId(), 1)
+                )
+        );
+        orderService.createOrder(memberOrderRequest, memberRepository.findByEmail("gen@init.com")
+                .orElseThrow().getApiKey());
 
-        OrderItem item1 = new OrderItem();
-        item1.setOrder(order);
-        item1.setProduct(product1);
-        item1.setQuantity(2);
+        // 비회원 주문
+        OrderCreateRequest guestOrderRequest = new OrderCreateRequest(
+                "guest@init.com",
+                "서울시 강남구",
+                "12345",
+                List.of(
+                        new OrderCreateRequest.Item(product2.getId(), 3)
+                )
+        );
+        orderService.createOrder(guestOrderRequest, null); // apiKey 없이 → 비회원 주문
+    }
 
-        OrderItem item2 = new OrderItem();
-        item2.setOrder(order);
-        item2.setProduct(product2);
-        item2.setQuantity(1);
-
-        order.setOrderItems(List.of(item1, item2));
-
-
-
-        orderRepository.save(order);
-        }
 }
 

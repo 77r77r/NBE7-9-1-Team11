@@ -1,7 +1,6 @@
 package com.cafe.domain.order.order.entity;
 
 import com.cafe.domain.product.product.entity.Product;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,21 +10,21 @@ import lombok.Setter;
 @NoArgsConstructor
 @Getter
 @Setter
-public class OrderItem {
+public class GuestOrderItem {
 
-    @Id @GeneratedValue
+    @Id
+    @GeneratedValue
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JsonIgnore
-    private Order order;
+    private GuestOrder guestOrder;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private Product product;
+
     private int quantity;
 
-    void setOrder(Order order) {
-        this.order = order;
+    void setGuestOrder(GuestOrder guestOrder) {
+        this.guestOrder = guestOrder;
     }
 }
