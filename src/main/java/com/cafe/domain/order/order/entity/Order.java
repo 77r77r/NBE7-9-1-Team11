@@ -1,6 +1,7 @@
 package com.cafe.domain.order.order.entity;
 
 import com.cafe.domain.member.member.entity.Member;
+import com.cafe.domain.order.order.dto.OrderResponse;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -41,5 +42,19 @@ public class Order {
     public void addItem(OrderItem item) {
         item.setOrder(this);
         orderItems.add(item);
+    }
+
+    public OrderResponse toDto(String email, String address, String postalCode) {
+        return new OrderResponse(
+                id,
+                email,
+                address,
+                postalCode,
+                status,
+                createdAt,
+                orderItems.stream()
+                        .map(OrderItem::toDto)
+                        .toList()
+        );
     }
 }

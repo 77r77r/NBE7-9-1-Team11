@@ -1,5 +1,6 @@
 package com.cafe.domain.order.order.entity;
 
+import com.cafe.domain.order.order.dto.OrderResponse;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -40,5 +41,19 @@ public class GuestOrder {
     public void addItem(GuestOrderItem item) {
         item.setGuestOrder(this);
         items.add(item);
+    }
+
+    public OrderResponse toDto() {
+        return new OrderResponse(
+                id,
+                email,
+                address,
+                postalCode,
+                status,
+                createdAt,
+                items.stream()
+                        .map(GuestOrderItem::toDto)
+                        .toList()
+        );
     }
 }
