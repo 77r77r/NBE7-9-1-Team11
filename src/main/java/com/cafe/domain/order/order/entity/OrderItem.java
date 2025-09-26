@@ -1,5 +1,6 @@
 package com.cafe.domain.order.order.entity;
 
+import com.cafe.domain.order.order.dto.OrderResponse;
 import com.cafe.domain.product.product.entity.Product;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -27,5 +28,14 @@ public class OrderItem {
 
     void setOrder(Order order) {
         this.order = order;
+    }
+
+    public OrderResponse.OrderItemResponse toDto() {
+        return new OrderResponse.OrderItemResponse(
+                product.getId(),
+                product.getProductName(),
+                product.getProductPrice(),
+                quantity
+        );
     }
 }
