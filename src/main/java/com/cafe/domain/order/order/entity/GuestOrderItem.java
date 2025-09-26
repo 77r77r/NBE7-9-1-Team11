@@ -1,5 +1,6 @@
 package com.cafe.domain.order.order.entity;
 
+import com.cafe.domain.order.order.dto.OrderResponse;
 import com.cafe.domain.product.product.entity.Product;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -26,5 +27,14 @@ public class GuestOrderItem {
 
     void setGuestOrder(GuestOrder guestOrder) {
         this.guestOrder = guestOrder;
+    }
+
+    public OrderResponse.OrderItemResponse toDto() {
+        return new OrderResponse.OrderItemResponse(
+                product.getId(),
+                product.getProductName(),
+                product.getProductPrice(),
+                quantity
+        );
     }
 }
