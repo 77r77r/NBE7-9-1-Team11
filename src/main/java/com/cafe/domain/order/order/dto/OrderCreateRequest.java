@@ -1,19 +1,17 @@
 package com.cafe.domain.order.order.dto;
 
-public class OrderCreateRequest {
-    private String email;
-    private String address;
-    private String zipcode;
+import jakarta.validation.constraints.*;
 
-    public String getEmail() {
-        return email;
-    }
+import java.util.List;
 
-    public String getAddress() {
-        return address;
-    }
-
-    public String getZipcode() {
-        return zipcode;
-    }
+public record OrderCreateRequest(
+        @Email @NotBlank String email,
+        @NotBlank String address,
+        @NotBlank @Pattern(regexp = "\\d{5}", message = "우편번호는 5자리여야 합니다.") String postalCode,
+        @NotNull List<Item> items
+) {
+    public record Item(
+            @NotNull Long productId,
+            @Min(1) int quantity
+    ) {}
 }

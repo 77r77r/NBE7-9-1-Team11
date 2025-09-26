@@ -53,6 +53,29 @@ public class Rq {
         return actor;
     }
 
+    public String getApiKeyOrNull() {
+        String authorization = request.getHeader("Authorization");
+
+        if (authorization != null && !authorization.isEmpty()) {
+            if (!authorization.startsWith("Bearer ")) {
+                throw new ServiceException("401-2", "헤더의 인증 정보 형식이 올바르지 않습니다.");
+            }
+            return authorization.replace("Bearer ", "");
+        }
+
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if (cookie.getName().equals("apiKey")) {
+                    return cookie.getValue();
+                }
+            }
+        }
+
+        return null; // 아예 없으면 null 리턴
+    }
+
+
     public void addCookie(String name, String value) {
 
         Cookie cookie = new Cookie(name, value);
