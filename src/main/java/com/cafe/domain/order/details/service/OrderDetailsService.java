@@ -19,6 +19,7 @@ public class OrderDetailsService {
     private final MemberRepository memberRepository;
     private final OrderRepository orderRepository;
     private final GuestOrderRepository guestOrderRepository;
+    private final OrderStatusService orderStatusService;
 
     public List<OrderDto> getOrdersByApiKey(String apiKey) {
         Member member = memberRepository.findByApiKey(apiKey)
@@ -30,8 +31,8 @@ public class OrderDetailsService {
             return List.of();
         }
 
-        return orders.stream()
-                .map(OrderDto::new)
+        return orderRepository.findByMember(member).stream()
+                .map(order -> new OrderDto(order, orderStatusService.calculateStatus(order.getCreatedAt())))
                 .toList();
     }
 
@@ -39,15 +40,13 @@ public class OrderDetailsService {
     public List<OrderDto> getOrdersByEmail(String email) {
         return memberRepository.findByEmail(email)
                 // 회원이면 Order에서 가져오기
-                .map(member -> orderRepository.findByMemberEmail(member.getEmail())
-                        .stream()
-                        .map(OrderDto::new)
+                .map(member -> orderRepository.findByMemberEmail(member.getEmail()).stream()
+                        .map(order -> new OrderDto(order, orderStatusService.calculateStatus(order.getCreatedAt())))
                         .toList()
                 )
                 // 비회원이면 GuestOrder에서 가져오기
-                .orElseGet(() -> guestOrderRepository.findByEmail(email)
-                        .stream()
-                        .map(OrderDto::new)
+                .orElseGet(() -> guestOrderRepository.findByEmail(email).stream()
+                        .map(order -> new OrderDto(order, orderStatusService.calculateStatus(order.getCreatedAt())))
                         .toList()
                 );
     }

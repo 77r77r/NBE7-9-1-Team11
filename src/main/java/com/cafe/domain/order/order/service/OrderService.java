@@ -32,53 +32,10 @@ public class OrderService {
     private final ProductRepository productRepository;
 
 
+    // 기본 createOrder
     public OrderResponse createOrder(OrderCreateRequest req, String apiKey) {
         LocalDateTime now = LocalDateTime.now();
-
-        // 전날 14:00 ~ 오늘 14:00 or 오늘 14:00 ~ 다음날 14:00
-        LocalDateTime start = now.toLocalTime().isBefore(LocalTime.of(14, 0))
-                ? now.toLocalDate().minusDays(1).atTime(14, 0)
-                : now.toLocalDate().atTime(14, 0);
-
-        LocalDateTime end = start.plusDays(1);
-
-        if (apiKey != null && !apiKey.isBlank()) {
-            // 로그인 상태 - 회원 주문
-            Member member = memberRepository.findByApiKey(apiKey)
-                    .orElseThrow(() -> new ServiceException("401-1", "유효하지 않은 API Key입니다."));
-
-            if (!member.getEmail().equals(req.email())) {
-                throw new ServiceException("403-1", "요청한 이메일과 로그인된 회원의 이메일이 일치하지 않습니다.");
-            }
-
-            // 기존 주문 있으면 병합, 없으면 새 주문
-            return orderRepository.findByMemberAndCreatedAtBetween(member, start, end)
-                    .map(order -> mergeMemberOrder(order, req, now))
-                    .orElseGet(() -> {
-                        Order newOrder = buildMemberOrder(member, req, now);
-                        return orderRepository.save(newOrder)
-                                .toDto(req.email(), req.address(), req.postalCode());
-                    });
-
-        } else {
-            // 로그아웃 상태 - 회원 이메일인지 확인
-            return memberRepository.findByEmail(req.email())
-                    .map(member -> orderRepository.findByMemberAndCreatedAtBetween(member, start, end)
-                            .map(order -> mergeMemberOrder(order, req, now))
-                            .orElseGet(() -> {
-                                Order newOrder = buildMemberOrder(member, req, now);
-                                return orderRepository.save(newOrder)
-                                        .toDto(req.email(), req.address(), req.postalCode());
-                            })
-                    )
-                    .orElseGet(() -> guestOrderRepository.findByEmailAndCreatedAtBetween(req.email(), start, end)
-                            .map(order -> mergeGuestOrder(order, req, now))
-                            .orElseGet(() -> {
-                                GuestOrder newOrder = buildGuestOrder(req, now);
-                                return guestOrderRepository.save(newOrder).toDto();
-                            })
-                    );
-        }
+        return createOrder(req, apiKey, now); // 오버로딩 호출 (중복 제거)
     }
 
     // 회원 주문 생성
@@ -171,4 +128,56 @@ public class OrderService {
 
         return guestOrderRepository.save(order).toDto();
     }
+
+
+    /////////////////////////ordarInitData 테스트용/////////////////////////////////////
+    //시간 직접 설정
+    public OrderResponse createOrder(OrderCreateRequest req, String apiKey, LocalDateTime now) {
+
+        // 전날 14:00 ~ 오늘 14:00 or 오늘 14:00 ~ 다음날 14:00
+        LocalDateTime start = now.toLocalTime().isBefore(LocalTime.of(14, 0))
+                ? now.toLocalDate().minusDays(1).atTime(14, 0)
+                : now.toLocalDate().atTime(14, 0);
+
+        LocalDateTime end = start.plusDays(1);
+
+        if (apiKey != null && !apiKey.isBlank()) {
+            // 로그인 상태 - 회원 주문
+            Member member = memberRepository.findByApiKey(apiKey)
+                    .orElseThrow(() -> new ServiceException("401-1", "유효하지 않은 API Key입니다."));
+
+            if (!member.getEmail().equals(req.email())) {
+                throw new ServiceException("403-1", "요청한 이메일과 로그인된 회원의 이메일이 일치하지 않습니다.");
+            }
+
+            // 기존 주문 있으면 병합, 없으면 새 주문
+            return orderRepository.findByMemberAndCreatedAtBetween(member, start, end)
+                    .map(order -> mergeMemberOrder(order, req, now))
+                    .orElseGet(() -> {
+                        Order newOrder = buildMemberOrder(member, req, now);
+                        return orderRepository.save(newOrder)
+                                .toDto(req.email(), req.address(), req.postalCode());
+                    });
+
+        } else {
+            // 로그아웃 상태 - 회원 이메일인지 확인
+            return memberRepository.findByEmail(req.email())
+                    .map(member -> orderRepository.findByMemberAndCreatedAtBetween(member, start, end)
+                            .map(order -> mergeMemberOrder(order, req, now))
+                            .orElseGet(() -> {
+                                Order newOrder = buildMemberOrder(member, req, now);
+                                return orderRepository.save(newOrder)
+                                        .toDto(req.email(), req.address(), req.postalCode());
+                            })
+                    )
+                    .orElseGet(() -> guestOrderRepository.findByEmailAndCreatedAtBetween(req.email(), start, end)
+                            .map(order -> mergeGuestOrder(order, req, now))
+                            .orElseGet(() -> {
+                                GuestOrder newOrder = buildGuestOrder(req, now);
+                                return guestOrderRepository.save(newOrder).toDto();
+                            })
+                    );
+        }
+    }
+
 }
