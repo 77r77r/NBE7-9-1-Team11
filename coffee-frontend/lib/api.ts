@@ -1,4 +1,4 @@
-// lib/api.ts (변경 부분 요약 버전)
+// lib/api.ts
 import type { Product, Order, OrderDraft, User, OrderStatus } from "@/types";
 import { storage } from "./storage";
 
@@ -14,7 +14,7 @@ const PATHS = {
   adminProductOne: (id: string) => `/admin/product/${id}`,
 
   // 주문
-  orderCreate: "/order",           // POST
+  orderCreate: "/order",                 // POST
   orderList: "/order/order",             // GET (관리자: 전체 목록)
   orderOne: (id: string) => `/order/order/${id}`, // GET/PUT/DELETE
   orderDetailsByEmail: "/order/details", // GET ?email=
@@ -32,10 +32,18 @@ function join(base: string, path: string) {
 }
 async function unwrapJson<T>(r: Response): Promise<T> {
   const body = await r.json().catch(() => ({}));
-  return (body && typeof body === "object" && "data" in body ? body.data : body) as T;
+  // RsData 포맷이면 data만 반환, 아니면 body 전체
+  return (body && typeof body === "object" && "data" in body ? (body as any).data : body) as T;
 }
 function j(o: any) { return JSON.stringify(o); }
 function isDummy() { return !API_BASE; }
+
+// ⬇︎ 추가: Authorization 헤더 주입 (apiKey가 있으면 붙임)
+function authHeaders(): HeadersInit {
+  const u = storage.getUser();
+  if (u?.apiKey) return { Authorization: `Bearer ${u.apiKey}` };
+  return {};
+}
 
 // ---------------- 더미들(생략 가능, 기존 그대로 사용) ----------------
 let DUMMY_PRODUCTS: Product[] = [
@@ -49,13 +57,10 @@ export const DUMMY_USERS: Array<User & { password: string }> = [
   { email: "admin@example.com",   password: "admin", nickname: "관리자", address: "서울시 종로구 관철동 1-1", postal_code: "03154", role: "admin" },
 ];
 
-
 // ★ 백엔드 payload → 프론트 User로 변환
 function toUserFromLoginPayload(body: any): User {
-  // payload 예시:
-  // { apiKey, memberDto:{ id, email, name, address, postalCode, authority, ... } }
-  const dto = body?.memberDto ?? {}; // 혹시 data가 memberDto 자체일 수도 있으니 안전 처리
-  const data  = body?.data ?? {};
+  // body 예시: { memberDto:{...}, apiKey:"..." }  ← unwrapJson 후
+  const dto = body?.memberDto ?? {};
   const role = (dto?.authority || "").toUpperCase() === "ADMIN" ? "admin" : "user";
   return {
     email: dto?.email ?? "",
@@ -63,7 +68,7 @@ function toUserFromLoginPayload(body: any): User {
     address: dto?.address ?? "",
     postal_code: dto?.postalCode ?? dto?.zipcode ?? "",
     role,
-    apiKey: data?.apiKey,
+    apiKey: body?.apiKey, // ⬅︎ 수정: data.apiKey가 아니라 body(api)의 최상위
   };
 }
 
@@ -72,48 +77,54 @@ function toUserFromLoginPayload(body: any): User {
 export async function login(email: string, password: string): Promise<User> {
   if (isDummy()) {
     // ... (더미 로직은 기존과 동일) ...
-    // 더미 유저 → storage.setUser(user) 반환
     throw new Error("더미 모드에서는 기존 더미 로그인 코드를 유지하세요.");
   }
   const r = await fetch(join(API_BASE, PATHS.login), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: j({ email, password }),
+    credentials: "include", // ⬅︎ 쿠키 수신
   });
   if (!r.ok) throw new Error("로그인 실패");
-  const data = await unwrapJson<any>(r);           // ← RsData.data
-  const user = toUserFromLoginPayload(data);       // ← 매핑
-  storage.setUser(user);                           // ← 저장 (apiKey 포함)
+  const data = await unwrapJson<any>(r);     // RsData.data → { memberDto, apiKey }
+  const user = toUserFromLoginPayload(data); // 매핑
+  storage.setUser(user);                     // 저장 (apiKey 포함)
   return user;
 }
 
 // 2-2) 로그아웃
 export async function logout() {
   if (!isDummy()) {
-    try { await fetch(join(API_BASE, PATHS.logout), { method: "DELETE" }); } catch {}
+    try {
+      await fetch(join(API_BASE, PATHS.logout), {
+        method: "DELETE",
+        credentials: "include",       // ⬅︎ 쿠키 기반 로그아웃
+        headers: { ...authHeaders() },// (Authorization 기반도 지원)
+      });
+    } catch {}
   }
   storage.clearUser();
 }
 
-// 2-3) 회원가입 (백엔드 응답이 동일한 포맷이라 가정)
+// 2-3) 회원가입
 export async function signup(data: {
   email: string; password: string; nickname: string; address: string; postal_code: string;
 }): Promise<User> {
   if (isDummy()) {
     throw new Error("더미 모드에서는 기존 더미 회원가입 코드를 유지하세요.");
   }
-  // 백엔드가 postalCode를 받으므로 변환
   const body = {
     email: data.email,
     password: data.password,
-    nickname: data.nickname,       // ✅ nickname 필수
+    nickname: data.nickname,
     address: data.address,
-    postalCode: data.postal_code,  // ✅ postalCode로 매핑
+    postalCode: data.postal_code,
   };
   const r = await fetch(join(API_BASE, PATHS.signup), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: j(body),
+    credentials: "include", // ⬅︎ 가입 시 쿠키 내려줄 수 있으므로 포함
   });
   if (!r.ok) throw new Error("회원가입 실패");
   const resp = await unwrapJson<any>(r);
@@ -122,15 +133,17 @@ export async function signup(data: {
   return user;
 }
 
-
-
 // 2-4) 마이페이지 조회
 export async function fetchMyPage(): Promise<User> {
   if (isDummy()) {
     const u = storage.getUser(); if (!u) throw new Error("로그인 필요");
     return u;
   }
-  const r = await fetch(join(API_BASE, PATHS.mypage), { cache: "no-store" });
+  const r = await fetch(join(API_BASE, PATHS.mypage), {
+    cache: "no-store",
+    credentials: "include",        // ⬅︎ 쿠키 전송
+    headers: { ...authHeaders() }, // ⬅︎ 헤더 인증 폴백
+  });
   if (!r.ok) throw new Error("마이페이지 조회 실패");
   const data = await unwrapJson<any>(r);
   const user = toUserFromLoginPayload(data);
@@ -146,7 +159,6 @@ export async function updateMyPage(patch: { nickname?: string; address?: string;
     storage.setUser(merged);
     return merged;
   }
-  // 백엔드가 postalCode, name으로 받으므로 변환
   const body = {
     nickname: patch.nickname,
     address: patch.address,
@@ -154,12 +166,13 @@ export async function updateMyPage(patch: { nickname?: string; address?: string;
   };
   const r = await fetch(join(API_BASE, PATHS.mypage), {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...authHeaders() },
     body: JSON.stringify(body),
+    credentials: "include", // ⬅︎ 쿠키 전송
   });
   if (!r.ok) throw new Error("마이페이지 수정 실패");
-  const resp = await r.json();
-  const user = toUserFromLoginPayload(resp);
+  const data = await unwrapJson<any>(r);
+  const user = toUserFromLoginPayload(data);
   storage.setUser(user);
   return user;
 }
@@ -187,24 +200,24 @@ export async function createOrder(draft: OrderDraft): Promise<{ ok: boolean; id?
     } as Order);
     return { ok: true, id };
   }
-  // 서버가 기대하는 키에 맞춰 변환
   const body = {
     email: draft.email,
     address: draft.address,
-    zipcode: draft.postcode,        // ✅ ZIPCODE 채움
-    postalCode: draft.postcode,     // (혹시 다른 컨트롤러가 postalCode로 받으면 대비)
-    totalPrice: draft.total,        // (필요 시)
+    zipcode: draft.postcode,
+    postalCode: draft.postcode,
+    totalPrice: draft.total,
     items: draft.items.map(it => ({
       productId: it.productId,
       qty: it.qty,
     })),
-    shipCategory: draft.shipCategory, // 서버에서 쓰면 전달
+    shipCategory: draft.shipCategory,
   };
 
-  const r = await fetch(join(API_BASE, "/order"), {
+  const r = await fetch(join(API_BASE, PATHS.orderCreate), {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...authHeaders() }, // ⬅︎ 헤더 인증 폴백
     body: JSON.stringify(body),
+    credentials: "include", // ⬅︎ 쿠키 인증
   });
   if (!r.ok) {
     const text = await r.text().catch(() => "");
@@ -217,13 +230,13 @@ export async function createOrder(draft: OrderDraft): Promise<{ ok: boolean; id?
 export async function fetchOrdersByEmail(email: string): Promise<Order[]> {
   if (!email) return [];
   if (isDummy()) return DUMMY_ORDERS.filter(o => o.email === email);
-  const url = `${join(API_BASE, PATHS.orderDetailsByEmail)}?email=${encodeURIComponent(email)}`;
+  const url = `${join(API_BASE, PATHS.orderDetailsByEmail)}`; // ⬅︎ 쿼리 추가
   const r = await fetch(url, { cache: "no-store" });
   if (!r.ok) throw new Error("주문 조회 실패");
   return await unwrapJson<Order[]>(r);
 }
 
-// 3) 관리자 통계 — 프론트 계산 (요구사항)
+// 3) 관리자 통계 — 프론트 계산
 export async function adminFetchStats(): Promise<{
   revenue: number; byProduct: Array<{ productId: string; name: string; qty: number; amount: number }>;
 }> {
@@ -245,7 +258,11 @@ export async function adminFetchStats(): Promise<{
 // 관리자: 주문 목록/단건/상태변경(업데이트)
 export async function adminFetchOrders(): Promise<Order[]> {
   if (isDummy()) return [...DUMMY_ORDERS];
-  const r = await fetch(join(API_BASE, PATHS.orderList), { cache: "no-store" });
+  const r = await fetch(join(API_BASE, PATHS.orderList), {
+    cache: "no-store",
+    credentials: "include",
+    headers: { ...authHeaders() },
+  });
   if (!r.ok) throw new Error("관리자 주문 목록 조회 실패");
   return await unwrapJson<Order[]>(r);
 }
@@ -253,7 +270,11 @@ export async function adminFetchOrder(id: string): Promise<Order> {
   if (isDummy()) {
     const o = DUMMY_ORDERS.find(x => x.id === id); if (!o) throw new Error("주문 없음"); return o;
   }
-  const r = await fetch(join(API_BASE, PATHS.orderOne(id)), { cache: "no-store" });
+  const r = await fetch(join(API_BASE, PATHS.orderOne(id)), {
+    cache: "no-store",
+    credentials: "include",
+    headers: { ...authHeaders() },
+  });
   if (!r.ok) throw new Error("주문 단건 조회 실패");
   return await unwrapJson<Order>(r);
 }
@@ -265,7 +286,10 @@ export async function adminUpdateOrderStatus(orderId: string, status: OrderStatu
     return true;
   }
   const r = await fetch(join(API_BASE, PATHS.orderOne(orderId)), {
-    method: "PUT", headers: { "Content-Type": "application/json" }, body: j({ status }),
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: j({ status }),
+    credentials: "include",
   });
   return r.ok;
 }
@@ -276,7 +300,11 @@ type AdminCreatePayload = { productname: string; productPrice: number; origin: s
 
 export async function adminFetchProducts(): Promise<Product[]> {
   if (isDummy()) return [...DUMMY_PRODUCTS];
-  const r = await fetch(join(API_BASE, PATHS.adminProducts), { cache: "no-store" });
+  const r = await fetch(join(API_BASE, PATHS.adminProducts), {
+    cache: "no-store",
+    credentials: "include",
+    headers: { ...authHeaders() },
+  });
   if (!r.ok) throw new Error("관리자 상품 조회 실패");
   return await unwrapJson<Product[]>(r);
 }
@@ -291,7 +319,10 @@ export async function adminCreateProduct(payload: AdminCreatePayload): Promise<P
     return np;
   }
   const r = await fetch(join(API_BASE, PATHS.adminProducts), {
-    method: "POST", headers: { "Content-Type": "application/json" }, body: j(payload),
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: j(payload),
+    credentials: "include",
   });
   if (!r.ok) throw new Error("상품 등록 실패");
   return await unwrapJson<Product>(r);
@@ -303,7 +334,10 @@ export async function adminUpdateProduct(p: Product): Promise<boolean> {
     return true;
   }
   const r = await fetch(join(API_BASE, PATHS.adminProductOne(p.id)), {
-    method: "PUT", headers: { "Content-Type": "application/json" }, body: j(p),
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: j(p),
+    credentials: "include",
   });
   return r.ok;
 }
@@ -312,6 +346,10 @@ export async function adminDeleteProduct(id: string): Promise<boolean> {
     DUMMY_PRODUCTS = DUMMY_PRODUCTS.filter(x => x.id !== id);
     return true;
   }
-  const r = await fetch(join(API_BASE, PATHS.adminProductOne(id)), { method: "DELETE" });
+  const r = await fetch(join(API_BASE, PATHS.adminProductOne(id)), {
+    method: "DELETE",
+    headers: { ...authHeaders() },
+    credentials: "include",
+  });
   return r.ok;
 }
