@@ -9,17 +9,16 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebConfig {
 
     @Bean
-    public WebMvcConfigurer cors() {
+    public WebMvcConfigurer corsConfigurer() {
         return new WebMvcConfigurer() {
             @Override
-            public void addCorsMappings(CorsRegistry reg) {
-                reg.addMapping("/**")
-                        .allowedOrigins("http://localhost:3000") // 정확히 지정
-                        .allowedMethods("GET","POST","PUT","PATCH","DELETE")
+            public void addCorsMappings(CorsRegistry registry) {
+                registry.addMapping("/api/**")
+                        .allowedOrigins("http://localhost:3000")
+                        .allowedMethods("*")
                         .allowedHeaders("*")
-                        .allowCredentials(true); // 중요
+                        .allowCredentials(true);
             }
         };
     }
-
 }

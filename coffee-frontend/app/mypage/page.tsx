@@ -10,7 +10,7 @@ export default function MyPage() {
   const [user, setUser] = useState<User | null>(storage.getUser());
   const [msg, setMsg] = useState("");
 
-  // 주문 목록 상태 추가
+  // 주문 목록 상태
   const [orders, setOrders] = useState<Order[]>([]);
   const [ordersLoading, setOrdersLoading] = useState<boolean>(false);
   const [ordersError, setOrdersError] = useState<string>("");
@@ -27,16 +27,15 @@ export default function MyPage() {
         setUser(u ?? null);
         return u ?? null;
       })
-      // 2) 내 정보가 있으면 주문 목록 조회
+      // 2) 내 정보가 있으면 주문 목록 조회 (최신순 정렬)
       .then(async (u) => {
         if (!u?.email) return;
         try {
           setOrdersLoading(true);
           setOrdersError("");
-          // NOTE: 백엔드가 인증을 요구한다면,
-          // lib/api.ts의 fetchOrdersByEmail에 credentials:'include' 추가 권장
           const list = await fetchOrdersByEmail(u.email);
-          setOrders(list ?? []);
+          const sorted = (Array.isArray(list) ? list : []).sort((a, b) => Number(b.id) - Number(a.id));
+          setOrders(sorted);
         } catch (e: any) {
           setOrdersError(e?.message || "주문 목록을 불러오지 못했습니다.");
         } finally {
@@ -70,12 +69,12 @@ export default function MyPage() {
     setMsg("저장되었습니다.");
     setTimeout(() => {
       setMsg("");
-      router.push("/"); // ✅ 저장 성공 후 메인 전환
+      router.push("/"); // 저장 성공 후 메인 전환
     }, 800);
   }
 
   return (
-    <main className="container p-4" style={{ maxWidth: 560 }}>
+    <main className="container p-4" style={{ maxWidth: 720 }}>
       <h2>마이페이지</h2>
 
       <div className="mb-2">
@@ -98,7 +97,7 @@ export default function MyPage() {
       <button className="btn btn-dark" onClick={save}>저장</button>
       {msg && <div className="text-success mt-2">{msg}</div>}
 
-      {/* --- 주문 내역 섹션 추가 --- */}
+      {/* --- 주문 내역 섹션 --- */}
       <section className="mt-5">
         <h3>주문 내역</h3>
 
@@ -115,38 +114,31 @@ export default function MyPage() {
                   <thead>
                     <tr>
                       <th style={{ width: 100 }}>주문번호</th>
-                      <th style={{ width: 140 }}>주문일시</th>
+                      <th style={{ width: 160 }}>주문일시</th>
                       <th style={{ width: 120 }}>상태</th>
                       <th>상품 / 수량</th>
-                      <th style={{ width: 100, textAlign: "right" }}>총액</th>
+                      <th style={{ width: 120, textAlign: "right" }}>총액</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {orders.map((o) => {
-                      const created = o.createdAt ? new Date(o.createdAt) : null;
-                      const when = created ? created.toLocaleString() : "-";
-                      const itemsText = (o.items || [])
-                        .map((it) => {
-                          // 이름 필드가 없을 수 있어 productId로 폴백
-                          const name = (it as any).name || (it as any).productName || it.productId || "상품";
-                          return `${name} x${it.qty ?? it.name ?? 0}`;
-                        })
-                        .join(", ");
-                      const total =
-                        (o as any).total ??
-                        (o as any).totalPrice ??
-                        (o.items || []).reduce((acc, it: any) => acc + (it.price ?? 0) * (it.qty ?? it.quantity ?? 0), 0);
-
-                      return (
-                        <tr key={String(o.id)}>
-                          <td>#{o.id}</td>
-                          <td>{when}</td>
-                          <td>{o.status || "-"}</td>
-                          <td>{itemsText || "-"}</td>
-                          <td style={{ textAlign: "right" }}>{total?.toLocaleString?.() ?? "-"}</td>
-                        </tr>
-                      );
-                    })}
+                    {orders.map((o) => (
+                      <tr key={String(o.id)}>
+                        <td>#{o.id}</td>
+                        <td>{o.createdAt ? new Date(o.createdAt).toLocaleString() : "-"}</td>
+                        <td>{o.status || "-"}</td>
+                        <td>
+                          <ul className="list-unstyled mb-0">
+                            {o.items.map((it, i) => (
+                              <li key={i} className="d-flex align-items-center gap-2">
+                                <span className="fw-semibold">{it.name}</span>
+                                <span className="badge text-bg-secondary">x{it.qty}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </td>
+                        <td style={{ textAlign: "right" }}>{(o.total ?? 0).toLocaleString()}원</td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
