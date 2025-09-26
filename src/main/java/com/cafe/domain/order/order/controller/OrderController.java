@@ -33,29 +33,3 @@ public class OrderController {
         );
     }
 }
-
-
-//// 단건
-//@GetMapping("/{id}")
-//public ResponseEntity<OrderResponse> get(@PathVariable Long id) {
-//    return ResponseEntity.ok(orderService.getOrder(id));
-//}
-//
-//// 다건
-//@GetMapping
-//public ResponseEntity<List<OrderResponse>> list() {
-//    return ResponseEntity.ok(orderService.listOrders());
-//}
-//
-//// 일부/전체 갱신
-//@PutMapping("/{id}")
-//public ResponseEntity<OrderResponse> update(@PathVariable Long id, @RequestBody OrderUpdateRequest req) {
-//    return ResponseEntity.ok(orderService.updateOrder(id, req));
-//}
-//
-//// 삭제
-//@DeleteMapping("/{id}")
-//public ResponseEntity<Void> delete(@PathVariable Long id) {
-//    orderService.deleteOrder(id);
-//    return ResponseEntity.noContent().build();
-//}
