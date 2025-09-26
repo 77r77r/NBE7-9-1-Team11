@@ -12,8 +12,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -35,7 +35,7 @@ public class ApiV1ProductControllerTest {
     void t1() throws Exception {
         ResultActions resultActions = mvc
                 .perform(
-                        get("/api/v1/products/list")
+                        get("/api/v1/product/list")
                 )
                 .andDo(print());
 
@@ -54,6 +54,7 @@ public class ApiV1ProductControllerTest {
     @Test
     @DisplayName("상품등록하기")
     void t2() throws Exception {
+        Long id = 5L;
         String productName = "신규등록원두";    // 상품명
         int productPrice = 20000;  // 가격
         String productOrigin = "비밀"; // 원산지
@@ -63,16 +64,17 @@ public class ApiV1ProductControllerTest {
 
         ResultActions resultActions = mvc
                 .perform(
-                        post("/api/v1/products")
+                        post("/api/v1/admin/products")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
+                                          "id": %d,
                                           "name": "%s",
                                           "price": "%d",
                                           "origin": "%s",
                                           "stock": "%d",
                                           "imageUrl": "%s" 
-                                        }""".formatted(productName, productPrice, productOrigin, productStock, imageUrl))
+                                        }""".formatted(id, productName, productPrice, productOrigin, productStock, imageUrl))
 
                 )
                 .andDo(print());
@@ -84,11 +86,42 @@ public class ApiV1ProductControllerTest {
                 .andExpect(status().isCreated());
 
         resultActions
-                .andExpect(jsonPath("$.name").value(productName))
-                .andExpect(jsonPath("$.price").value(productPrice))
-                .andExpect(jsonPath("$.origin").value(productOrigin))
-                .andExpect(jsonPath("$.stock").value(productStock))
-                .andExpect(jsonPath("$.imageUrl").value(imageUrl));
+                .andExpect(jsonPath("$.data.productDto.id").value(id))
+                .andExpect(jsonPath("$.data.productDto.name").value(productName))
+                .andExpect(jsonPath("$.data.productDto.price").value(productPrice))
+                .andExpect(jsonPath("$.data.productDto.origin").value(productOrigin))
+                .andExpect(jsonPath("$.data.productDto.stock").value(productStock))
+                .andExpect(jsonPath("$.data.productDto.imageUrl").value(imageUrl));
+
+    }
+
+    @Test
+    @DisplayName("상품삭제하기")
+    void t3() throws Exception {
+
+        Long id = 3L;
+
+        ResultActions resultActions = mvc
+                .perform(
+                        delete("/api/v1/admin/products/%d".formatted(id))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                            "id": %d
+                                                                                }
+                                        """.formatted(id))
+                )
+                .andDo(print());
+
+
+        resultActions
+                .andExpect(handler().handlerType(ApiV1ProductController.class))
+                .andExpect(handler().methodName("deleteItem"))
+                .andExpect(status().isOk());
+
+
+        assertThat(productRepository.findById(id)).isEmpty();
+
 
     }
 }
