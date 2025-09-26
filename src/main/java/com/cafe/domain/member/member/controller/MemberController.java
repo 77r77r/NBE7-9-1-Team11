@@ -1,13 +1,14 @@
 package com.cafe.domain.member.member.controller;
 
 import com.cafe.domain.member.member.dto.MemberDto;
-import com.cafe.global.rsData.RsData;
-import com.cafe.domain.member.member.service.MemberService;
 import com.cafe.domain.member.member.entity.Member;
+import com.cafe.domain.member.member.service.MemberService;
 import com.cafe.global.exception.ServiceException;
 import com.cafe.global.rq.Rq;
+import com.cafe.global.rsData.RsData;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +24,10 @@ public class MemberController {
     record JoinReqBody(
             @NotBlank
             @Size(min = 6, max = 30)
+            @Pattern(
+                    regexp = "^.+@.+\\..+$",
+                    message = "이메일 형식이 올바르지 않습니다"
+            )
             String email,
 
             @NotBlank
@@ -38,7 +43,7 @@ public class MemberController {
             String address,
 
             @NotBlank
-            @Size(min = 5, max = 5)
+            @Pattern(regexp = "\\d{5}", message = "우편번호는 숫자 5자리여야 합니다") // 숫자 5자리만 허용
             String postalCode
     ) {}
 

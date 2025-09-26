@@ -1,12 +1,13 @@
 package com.cafe.domain.member.member.service;
 
+import com.cafe.domain.member.member.entity.Member;
 import com.cafe.domain.member.member.repository.MemberRepository;
 import com.cafe.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
-import com.cafe.domain.member.member.entity.Member;
 
 @Service
 @RequiredArgsConstructor
@@ -18,6 +19,7 @@ public class MemberService {
         return memberRepository.count();
     }
 
+    // 회원가입
     public Member join(String email, String password, String nickname, String address, String postalCode) {
 
         memberRepository.findByEmail(email)
@@ -37,6 +39,9 @@ public class MemberService {
         return memberRepository.findByApiKey(apiKey);
     }
 
+
+    // 회원 정보 수정
+    @Transactional // DB반영, 원자성 보장 위해 사용
     public void ModifyMemberInfo(
             Member member, String password, String nickname,
             String address, String postalCode
