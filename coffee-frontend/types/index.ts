@@ -22,7 +22,7 @@ export type Product = {
     postcode: string;
     items: CartItem[];
     total: number;
-    shipCategory: "TODAY" | "TOMORROW";
+    shipCategory: "배송준비중" | "배송중" | "배송완료";
   };
   
   export type Order = {

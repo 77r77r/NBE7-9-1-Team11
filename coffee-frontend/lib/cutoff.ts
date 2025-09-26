@@ -1,11 +1,15 @@
-export function getShipCategoryKST(now = new Date()): "TODAY" | "TOMORROW" {
-    const utc = now.getTime() + now.getTimezoneOffset() * 60_000;
-    const kst = new Date(utc + 9 * 60 * 60 * 1000);
-    const cutoff = new Date(kst);
-    cutoff.setHours(14, 0, 0, 0);
-    return kst.getTime() <= cutoff.getTime() ? "TODAY" : "TOMORROW";
+// lib/cutoff.ts
+export type ShippingStatus = "배송준비중" | "배송중" | "배송완료";
+
+export function getInitialShippingStatus(): ShippingStatus {
+  return "배송준비중"; // 새 주문 기본값
+}
+
+export function shippingStatusCopy(s: ShippingStatus) {
+  switch (s) {
+    case "배송준비중": return "주문이 접수되어 배송을 준비 중입니다.";
+    case "배송중":   return "상품이 발송되어 배송 중입니다.";
+    case "배송완료": return "상품 배송이 완료되었습니다.";
+    default:         return "";
   }
-  
-  export const shipCopy = (c: "TODAY" | "TOMORROW") =>
-    c === "TODAY" ? "오후 2시 이전 결제 — 오늘 발송" : "오후 2시 이후 결제 — 내일 발송";
-  
+}

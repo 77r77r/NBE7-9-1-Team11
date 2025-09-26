@@ -1,58 +1,86 @@
+// components/GuestOrderLookup.tsx
 "use client";
 
 import { useState } from "react";
-import { fetchOrdersByEmail } from "@/lib/api";
 import type { Order } from "@/types";
+import { fetchOrdersByEmail } from "@/lib/api";
+import RefreshButton from "./RefreshButton";
 
 export default function GuestOrderLookup() {
   const [email, setEmail] = useState("");
-  const [orders, setOrders] = useState<Order[] | null>(null);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
 
-  async function lookup() {
-    setErr(""); setLoading(true);
+  async function load() {
+    if (!email) return;
+    setLoading(true); setErr("");
     try {
-      const data = await fetchOrdersByEmail(email.trim());
-      setOrders(data);
+      const list = await fetchOrdersByEmail(email);
+      const sorted = (Array.isArray(list) ? list : []).sort((a, b) => Number(b.id) - Number(a.id));
+      setOrders(sorted);
     } catch (e: any) {
-      setErr(e.message || "조회 실패");
-      setOrders(null);
+      setErr(e?.message || "조회 실패");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="card p-3 mt-3">
-      <h5 className="mb-2">비회원 주문 조회</h5>
-      <div className="input-group mb-2">
-        <input className="form-control" placeholder="이메일 주소" value={email} onChange={e=>setEmail(e.target.value)} />
-        <button className="btn btn-outline-dark" onClick={lookup} disabled={!email || loading}>
-          {loading ? "조회중..." : "조회"}
-        </button>
+    <div className="card p-3">
+      <h5 className="mb-3">비회원 주문 조회</h5>
+      <div className="d-flex gap-2">
+        <input
+          className="form-control"
+          placeholder="이메일 입력"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+        />
+        <button className="btn btn-primary" onClick={load}>조회</button>
+        <RefreshButton onClick={load} label="새로고침" />
       </div>
-      {err && <div className="text-danger small mb-2">{err}</div>}
 
-      {orders && (
-        <div className="table-responsive">
-          <table className="table table-sm">
-            <thead><tr><th>주문번호</th><th>결제시각</th><th>금액</th><th>발송구분</th><th>상태</th></tr></thead>
-            <tbody>
-              {orders.length === 0 && <tr><td colSpan={5} className="text-muted">주문 내역이 없습니다.</td></tr>}
-              {orders.map(o => (
-                <tr key={o.id}>
-                  <td>{o.id}</td>
-                  <td>{new Date(o.createdAt).toLocaleString()}</td>
-                  <td>{o.total.toLocaleString()}원</td>
-                  <td>{o.shipCategory}</td>
-                  <td>{o.status}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      {err && <div className="alert alert-danger my-2">{err}</div>}
+      {loading && <div className="text-muted my-2">불러오는 중…</div>}
+
+      <div className="table-responsive mt-3">
+        <table className="table table-sm align-middle">
+          <thead>
+            <tr>
+              <th style={{width:100}}>주문번호</th>
+              <th style={{width:160}}>주문일시</th>
+              <th>상품 / 수량</th>
+              <th style={{width:120, textAlign:"right"}}>총액</th>
+              <th style={{width:120}}>발송구분</th>
+              <th style={{width:120}}>상태</th>
+            </tr>
+          </thead>
+          <tbody>
+            {orders.length === 0 && (
+              <tr><td colSpan={6} className="text-muted">조회 결과가 없습니다.</td></tr>
+            )}
+            {orders.map(o => (
+              <tr key={o.id}>
+                <td>#{o.id}</td>
+                <td>{o.createdAt ? new Date(o.createdAt).toLocaleString() : "-"}</td>
+                <td>
+                  <ul className="list-unstyled mb-0">
+                    {o.items.map((it, i) => (
+                      <li key={i} className="d-flex align-items-center gap-2">
+                        <span className="fw-semibold">{it.name}</span>
+                        <span className="badge text-bg-secondary">x{it.qty}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </td>
+                <td style={{textAlign:"right"}}>{(o.total ?? 0).toLocaleString()}원</td>
+                <td>{o.shipCategory ?? "-"}</td>
+                <td>{o.status ?? "-"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
