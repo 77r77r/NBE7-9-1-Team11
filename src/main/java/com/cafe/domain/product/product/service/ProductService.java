@@ -49,8 +49,12 @@ public class ProductService {
         return productRepository.findByProductName(productName);
     }
 
-    public void deleteProduct(Product product) {
+    public void delete(Product product) {
         productRepository.delete(product);
+    }
+
+    public void moidfy(Product product, String productName, int productPrice, String origin, int stock, String imgUrl) {
+        product.update(productName, productPrice, origin, stock, imgUrl);
     }
 
 

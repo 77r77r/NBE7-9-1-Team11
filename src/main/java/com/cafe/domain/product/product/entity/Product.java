@@ -26,4 +26,12 @@ public class Product extends BaseEntity {
         return "{상품명: " + this.productName + ", 가격: " + this.productPrice + "}";
     }
 
+
+    public void update(String productName, int productPrice, String origin, int stock, String imgUrl) {
+        this.productName = productName;
+        this.productPrice = productPrice;
+        this.productOrigin = origin;
+        this.productStock = stock;
+        this.imageUrl = imgUrl;
+    }
 }
