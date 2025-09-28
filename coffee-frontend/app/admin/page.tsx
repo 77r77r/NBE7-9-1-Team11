@@ -1,187 +1,150 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { storage } from "@/lib/storage";
-import type { Order, Product, OrderStatus } from "@/types";
-import {
-  adminFetchOrders, adminUpdateOrderStatus,
-  adminFetchProducts, adminCreateProduct, adminUpdateProduct, adminDeleteProduct,
-  adminFetchStats
-} from "@/lib/api";
-import { getShipCategoryKST } from "@/lib/cutoff";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-
+import { useEffect, useState } from "react";
+import type { Product, Order } from "@/types";
+import { fetchProducts, adminDeleteProduct, adminFetchOrders } from "@/lib/api";
+import RefreshButton from "@/components/RefreshButton";
 
 export default function AdminPage() {
-  const router = useRouter();
-  const user = storage.getUser();
-  const [orders, setOrders] = useState<Order[]>([]);
+  // --- 상품 관리 상태 ---
   const [products, setProducts] = useState<Product[]>([]);
-  const [stats, setStats] = useState<{ revenue:number; byProduct: Array<{ productId:string; name:string; qty:number; amount:number }> } | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState("");
 
-  async function loadAll() {
-    const [o, p, s] = await Promise.all([
-      adminFetchOrders(),
-      adminFetchProducts(),
-      adminFetchStats()
-    ]);
-    setOrders(o);
-    setProducts(p);
-    setStats(s);
-  }
-
-  useEffect(() => { loadAll(); }, []);
-
-  if (!user || user.role !== "admin") {
-    return (
-      <main className="container p-4">
-        <h2>관리자 페이지</h2>
-        <div className="alert alert-danger mt-3">접근 권한이 없습니다. 관리자 계정으로 로그인하세요.</div>
-        <Link className="btn btn-outline-secondary mt-2" href="/">메인으로</Link>
-      </main>
-    );
+  async function loadProducts() {
+    setLoading(true); setErr("");
+    try {
+      const list = await fetchProducts(); // 메인 조회 API 재사용 (이미지 표시 X)
+      setProducts(list);
+    } catch (e: any) {
+      setErr(e?.message || "조회 실패");
+    } finally {
+      setLoading(false);
+    }
   }
 
-  // 주문 상태 변경 핸들러
-  async function setStatus(id: string, status: OrderStatus) {
-    const ok = await adminUpdateOrderStatus(id, status);
-    if (ok) setOrders(orders.map(o => o.id === id ? { ...o, status } : o));
+  async function handleDelete(id: string | number) {
+    if (!confirm("정말 삭제하시겠어요?")) return;
+    const ok = await adminDeleteProduct(String(id));
+    if (!ok) { alert("삭제 실패"); return; }
+    setProducts(prev => prev.filter(p => String(p.id) !== String(id)));
   }
 
-  // 상품 CRUD 핸들러
-  async function createProduct() {
-    const np = await adminCreateProduct({
-      productname: "New Coffee",
-      origin: "Unknown",
-      productPrice: 5000,
-      imgUrl: "https://i.imgur.com/HKOFQYa.jpeg",
-      stock: 10,
-      active: true,
-    });
-    setProducts([np, ...products]);
+  // --- 주문 목록(가정) 상태 ---
+  const [adminOrders, setAdminOrders] = useState<Order[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [ordersErr, setOrdersErr] = useState("");
+
+  async function loadOrders() {
+    setOrdersLoading(true); setOrdersErr("");
+    try {
+      const list = await adminFetchOrders();        // 백엔드 구현 가정
+      list.sort((a, b) => Number(b.id) - Number(a.id)); // 최신(id 큰 순) 정렬
+      setAdminOrders(list);
+    } catch (e: any) {
+      setOrdersErr(e?.message || "주문 조회 실패");
+    } finally {
+      setOrdersLoading(false);
+    }
   }
-  async function updateProduct(p: Product) {
-    const ok = await adminUpdateProduct(p);
-    if (ok) setProducts(products.map(x => x.id === p.id ? p : x));
-  }
-  async function deleteProduct(id: string) {
-    const ok = await adminDeleteProduct(id);
-    if (ok) setProducts(products.filter(x => x.id !== id));
-  }
+
+  useEffect(() => { loadProducts(); loadOrders(); }, []);
 
   return (
     <main className="container p-4">
+      {/* ===================== 상품 관리 ===================== */}
       <div className="d-flex justify-content-between align-items-center">
-        <h2>관리자 페이지</h2>
-        <div className="d-flex gap-2">
-          <button className="btn btn-outline-secondary btn-sm" onClick={loadAll}>새로고침</button>
-          <Link className="btn btn-outline-dark btn-sm" href="/">메인</Link>
-        </div>
+        <h2>상품 관리</h2>
+        <RefreshButton onClick={loadProducts} label="새로고침" />
       </div>
 
-      {/* 주문 관리 */}
-      <section className="mt-4">
-        <h4>주문 관리</h4>
-        <div className="table-responsive">
-          <table className="table table-sm align-middle">
-            <thead>
-              <tr><th>주문번호</th><th>결제시각</th><th>이메일</th><th>금액</th><th>발송구분</th><th>상태</th><th>액션</th></tr>
-            </thead>
-            <tbody>
-              {orders.map(o => (
-                <tr key={o.id}>
-                  <td>{o.id}</td>
-                  <td>{new Date(o.createdAt).toLocaleString()}</td>
-                  <td>{o.email}</td>
-                  <td>{o.total.toLocaleString()}원</td>
-                  <td>{o.shipCategory}</td>
-                  <td><span className="badge bg-secondary">{o.status}</span></td>
-                  <td className="d-flex gap-1">
-                    <button className="btn btn-outline-dark btn-sm" onClick={() => setStatus(o.id, "PREPARING")}>준비중</button>
-                    <button className="btn btn-outline-primary btn-sm" onClick={() => setStatus(o.id, "SHIPPING")}>배송중</button>
-                    <button className="btn btn-outline-success btn-sm" onClick={() => setStatus(o.id, "DELIVERED")}>완료</button>
-                    <button className="btn btn-outline-danger btn-sm" onClick={() => setStatus(o.id, "CANCELLED")}>취소</button>
-                  </td>
-                </tr>
-              ))}
-              {orders.length === 0 && <tr><td colSpan={7} className="text-muted">주문이 없습니다.</td></tr>}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      {err && <div className="alert alert-danger my-2">{err}</div>}
+      {loading && <div className="text-muted my-2">불러오는 중…</div>}
 
-      {/* 상품 관리 */}
+      <div className="table-responsive mt-3">
+        <table className="table table-sm align-middle">
+          <thead>
+            <tr>
+              <th style={{width:90}}>ID</th>
+              <th>상품명</th>
+              <th style={{width:160}}>원산지</th>
+              <th style={{width:120}}>가격</th>
+              <th style={{width:120}}>재고</th>
+              <th style={{width:120}}>관리</th>
+            </tr>
+          </thead>
+          <tbody>
+            {products.length === 0 && (
+              <tr><td colSpan={6} className="text-muted">상품이 없습니다.</td></tr>
+            )}
+            {products.map(p => (
+              <tr key={String(p.id)}>
+                <td>#{p.id}</td>
+                <td>{p.name}</td>
+                <td>{p.origin}</td>
+                <td>{(p.price ?? 0).toLocaleString()}원</td>
+                <td>{p.stock ?? 0}</td>
+                <td className="text-end">
+                  <button
+                    className="btn btn-outline-danger btn-sm"
+                    onClick={() => handleDelete(p.id as any)}
+                  >
+                    삭제
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* ===================== 주문 목록(가정) ===================== */}
       <section className="mt-5">
         <div className="d-flex justify-content-between align-items-center">
-          <h4>상품 관리</h4>
-          <button className="btn btn-dark btn-sm" onClick={createProduct}>상품 등록</button>
+          <h3>주문 목록</h3>
+          <RefreshButton onClick={loadOrders} label="새로고침" />
         </div>
-        <div className="table-responsive">
+
+        {ordersErr && <div className="alert alert-danger my-2">{ordersErr}</div>}
+        {ordersLoading && <div className="text-muted my-2">불러오는 중…</div>}
+
+        <div className="table-responsive mt-2">
           <table className="table table-sm align-middle">
             <thead>
-              <tr><th>ID</th><th>이름</th><th>산지</th><th>가격</th><th>재고</th><th>활성</th><th>액션</th></tr>
+              <tr>
+                <th style={{width:90}}>ID</th>
+                <th style={{width:160}}>주문시각</th>
+                <th style={{width:120}}>상태</th>
+                <th>상품 / 수량</th>
+                <th style={{width:120, textAlign:"right"}}>총액</th>
+              </tr>
             </thead>
             <tbody>
-              {products.map(p => (
-                <tr key={p.id}>
-                  <td>{p.id}</td>
-                  <td><input className="form-control form-control-sm" defaultValue={p.name} onBlur={e => updateProduct({ ...p, name: e.target.value })} /></td>
-                  <td><input className="form-control form-control-sm" defaultValue={p.origin} onBlur={e => updateProduct({ ...p, origin: e.target.value })} /></td>
-                  <td><input className="form-control form-control-sm" type="number" defaultValue={p.price} onBlur={e => updateProduct({ ...p, price: Number(e.target.value) })} /></td>
-                  <td><input className="form-control form-control-sm" type="number" defaultValue={p.stock ?? 0} onBlur={e => updateProduct({ ...p, stock: Number(e.target.value) })} /></td>
+              {adminOrders.length === 0 && (
+                <tr><td colSpan={5} className="text-muted">주문이 없습니다.</td></tr>
+              )}
+              {adminOrders.map(o => (
+                <tr key={String(o.id)}>
+                  <td>#{o.id}</td>
+                  <td>{o.createdAt ? new Date(o.createdAt).toLocaleString() : "-"}</td>
+                  <td>{o.status ?? "-"}</td>
                   <td>
-                    <input type="checkbox" className="form-check-input" defaultChecked={p.active ?? true}
-                      onChange={e => updateProduct({ ...p, active: e.target.checked })} />
+                    <ul className="list-unstyled mb-0">
+                      {o.items.map((it, i) => (
+                        <li key={i} className="d-flex align-items-center gap-2">
+                          <span className="fw-semibold">{it.name}</span>
+                          <span className="badge text-bg-secondary">x{it.qty}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </td>
-                  <td>
-                    <button className="btn btn-outline-danger btn-sm" onClick={() => deleteProduct(p.id)}>삭제</button>
-                  </td>
+                  <td style={{textAlign:"right"}}>{(o.total ?? 0).toLocaleString()}원</td>
                 </tr>
               ))}
-              {products.length === 0 && <tr><td colSpan={7} className="text-muted">상품이 없습니다.</td></tr>}
             </tbody>
           </table>
         </div>
       </section>
-
-      {/* 통계 */}
-      <section className="mt-5">
-        <h4>통계</h4>
-        {stats ? (
-          <>
-            <div className="mb-2"><b>총 매출:</b> {stats.revenue.toLocaleString()}원</div>
-            <div className="table-responsive">
-              <table className="table table-sm">
-                <thead>
-                  <tr><th>상품</th><th>수량</th><th>금액</th></tr>
-                </thead>
-                <tbody>
-                  {stats.byProduct.map(row => (
-                    <tr key={row.productId}>
-                      <td>{row.name}</td>
-                      <td>{row.qty}</td>
-                      <td>{row.amount.toLocaleString()}원</td>
-                    </tr>
-                  ))}
-                  {stats.byProduct.length === 0 && <tr><td colSpan={3} className="text-muted">데이터 없음</td></tr>}
-                </tbody>
-              </table>
-            </div>
-          </>
-        ) : (
-          <div className="text-muted">불러오는 중…</div>
-        )}
-      </section>
-              {/* 뒤로가기 버튼 */}
-
-        <button
-          type="button"
-          className="btn btn-outline-secondary btn-sm"
-          onClick={() => router.back()}
-        >
-          뒤로가기
-        </button>
     </main>
   );
 }

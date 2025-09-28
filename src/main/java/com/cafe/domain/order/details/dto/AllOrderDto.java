@@ -6,16 +6,20 @@ import com.cafe.domain.order.order.entity.Order;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public record OrderDto(
-        Long orderId,
+public record AllOrderDto(
+        String email,
+        String address,
+        String postalCode,
         LocalDateTime orderTime,
         String status,
         List<OrderItemDto> items
 ) {
-    // 회원 주문 생성자
-    public OrderDto(Order order, String status) {
+    // 회원 주문
+    public AllOrderDto(Order order, String status) {
         this(
-                order.getId(),
+                order.getMember() != null ? order.getMember().getEmail() : "",
+                order.getMember() != null ? order.getMember().getAddress() : "",
+                order.getMember() != null ? order.getMember().getPostalCode() : "",
                 order.getCreatedAt(),
                 status,
                 order.getOrderItems().stream()
@@ -24,10 +28,12 @@ public record OrderDto(
         );
     }
 
-    // 비회원 주문 생성자
-    public OrderDto(GuestOrder guestOrder, String status) {
+    // 비회원 주문
+    public AllOrderDto(GuestOrder guestOrder, String status) {
         this(
-                guestOrder.getId(),
+                guestOrder.getEmail(),
+                guestOrder.getAddress(),
+                guestOrder.getPostalCode(),
                 guestOrder.getCreatedAt(),
                 status,
                 guestOrder.getItems().stream()

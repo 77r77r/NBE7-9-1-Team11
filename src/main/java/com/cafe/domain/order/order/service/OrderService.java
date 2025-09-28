@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.NoSuchElementException;
 
 @Service
@@ -30,9 +31,118 @@ public class OrderService {
     private final MemberRepository memberRepository;
     private final ProductRepository productRepository;
 
+
+    // 기본 createOrder
     public OrderResponse createOrder(OrderCreateRequest req, String apiKey) {
+        LocalDateTime now = LocalDateTime.now();
+        return createOrder(req, apiKey, now); // 오버로딩 호출 (중복 제거)
+    }
+
+    // 회원 주문 생성
+    private Order buildMemberOrder(Member member, OrderCreateRequest req, LocalDateTime now) {
+        Order order = new Order();
+        order.setStatus("배송준비중");
+        order.setCreatedAt(now);
+        order.setMember(member);
+
+        req.items().forEach(it -> {
+            Product product = productRepository.findById(it.productId())
+                    .orElseThrow(() -> new NoSuchElementException("상품을 찾을 수 없습니다: " + it.productId()));
+            OrderItem item = new OrderItem();
+            item.setProduct(product);
+            item.setQuantity(it.quantity());
+            order.addItem(item);
+        });
+
+        return order;
+    }
+
+    // 비회원 주문 생성
+    private GuestOrder buildGuestOrder(OrderCreateRequest req, LocalDateTime now) {
+        GuestOrder guestOrder = new GuestOrder();
+        guestOrder.setStatus("배송준비중");
+        guestOrder.setCreatedAt(now);
+        guestOrder.setEmail(req.email());
+        guestOrder.setAddress(req.address());
+        guestOrder.setPostalCode(req.postalCode());
+
+        req.items().forEach(it -> {
+            Product product = productRepository.findById(it.productId())
+                    .orElseThrow(() -> new NoSuchElementException("상품을 찾을 수 없습니다: " + it.productId()));
+            GuestOrderItem item = new GuestOrderItem();
+            item.setProduct(product);
+            item.setQuantity(it.quantity());
+            guestOrder.addItem(item);
+        });
+
+        return guestOrder;
+    }
+
+    // 회원 주문 병합
+    private OrderResponse mergeMemberOrder(Order order, OrderCreateRequest req, LocalDateTime now) {
+        order.setCreatedAt(now);
+        req.items().forEach(it -> {
+            Product product = productRepository.findById(it.productId())
+                    .orElseThrow(() -> new NoSuchElementException("상품을 찾을 수 없습니다: " + it.productId()));
+
+            // 같은 상품이 있으면 수량만 증가
+            order.getOrderItems().stream()
+                    .filter(oi -> oi.getProduct().getId().equals(product.getId()))
+                    .findFirst()
+                    .ifPresentOrElse(
+                            oi -> oi.setQuantity(oi.getQuantity() + it.quantity()),
+                            () -> {
+                                OrderItem newItem = new OrderItem();
+                                newItem.setProduct(product);
+                                newItem.setQuantity(it.quantity());
+                                order.addItem(newItem);
+                            }
+                    );
+        });
+
+        return orderRepository.save(order)
+                .toDto(req.email(), req.address(), req.postalCode());
+    }
+
+    // 비회원 주문 병합
+    private OrderResponse mergeGuestOrder(GuestOrder order, OrderCreateRequest req, LocalDateTime now) {
+        order.setCreatedAt(now);
+        req.items().forEach(it -> {
+            Product product = productRepository.findById(it.productId())
+                    .orElseThrow(() -> new NoSuchElementException("상품을 찾을 수 없습니다: " + it.productId()));
+
+            // 같은 상품이 있으면 수량만 증가
+            order.getItems().stream()
+                    .filter(gi -> gi.getProduct().getId().equals(product.getId()))
+                    .findFirst()
+                    .ifPresentOrElse(
+                            gi -> gi.setQuantity(gi.getQuantity() + it.quantity()),
+                            () -> {
+                                GuestOrderItem newItem = new GuestOrderItem();
+                                newItem.setProduct(product);
+                                newItem.setQuantity(it.quantity());
+                                order.addItem(newItem);
+                            }
+                    );
+        });
+
+        return guestOrderRepository.save(order).toDto();
+    }
+
+
+    /////////////////////////ordarInitData 테스트용/////////////////////////////////////
+    //시간 직접 설정
+    public OrderResponse createOrder(OrderCreateRequest req, String apiKey, LocalDateTime now) {
+
+        // 전날 14:00 ~ 오늘 14:00 or 오늘 14:00 ~ 다음날 14:00
+        LocalDateTime start = now.toLocalTime().isBefore(LocalTime.of(14, 0))
+                ? now.toLocalDate().minusDays(1).atTime(14, 0)
+                : now.toLocalDate().atTime(14, 0);
+
+        LocalDateTime end = start.plusDays(1);
+
         if (apiKey != null && !apiKey.isBlank()) {
-            // 회원 주문
+            // 로그인 상태 - 회원 주문
             Member member = memberRepository.findByApiKey(apiKey)
                     .orElseThrow(() -> new ServiceException("401-1", "유효하지 않은 API Key입니다."));
 
@@ -40,118 +150,34 @@ public class OrderService {
                 throw new ServiceException("403-1", "요청한 이메일과 로그인된 회원의 이메일이 일치하지 않습니다.");
             }
 
-            Order order = new Order();
-            order.setStatus("배송준비중");
-            order.setCreatedAt(LocalDateTime.now());
-            order.setMember(member);
+            // 기존 주문 있으면 병합, 없으면 새 주문
+            return orderRepository.findByMemberAndCreatedAtBetween(member, start, end)
+                    .map(order -> mergeMemberOrder(order, req, now))
+                    .orElseGet(() -> {
+                        Order newOrder = buildMemberOrder(member, req, now);
+                        return orderRepository.save(newOrder)
+                                .toDto(req.email(), req.address(), req.postalCode());
+                    });
 
-            req.items().forEach(it -> {
-                Product product = productRepository.findById(it.productId())
-                        .orElseThrow(() -> new NoSuchElementException("상품을 찾을 수 없습니다: " + it.productId()));
-                OrderItem item = new OrderItem();
-                item.setProduct(product);
-                item.setQuantity(it.quantity());
-                order.addItem(item);
-            });
-
-            Order saved = orderRepository.save(order);
-
-            return toResponse(saved, req.email(), req.address(), req.postalCode());
         } else {
-            // 비회원 주문
-            GuestOrder guestOrder = new GuestOrder();
-            guestOrder.setStatus("배송준비중");
-            guestOrder.setCreatedAt(LocalDateTime.now());
-            guestOrder.setEmail(req.email());
-            guestOrder.setAddress(req.address());
-            guestOrder.setPostalCode(req.postalCode());
-
-            req.items().forEach(it -> {
-                Product product = productRepository.findById(it.productId())
-                        .orElseThrow(() -> new NoSuchElementException("상품을 찾을 수 없습니다: " + it.productId()));
-                GuestOrderItem item = new GuestOrderItem();
-                item.setProduct(product);
-                item.setQuantity(it.quantity());
-                guestOrder.addItem(item);
-            });
-
-            GuestOrder saved = guestOrderRepository.save(guestOrder);
-
-            return toResponse(saved);
+            // 로그아웃 상태 - 회원 이메일인지 확인
+            return memberRepository.findByEmail(req.email())
+                    .map(member -> orderRepository.findByMemberAndCreatedAtBetween(member, start, end)
+                            .map(order -> mergeMemberOrder(order, req, now))
+                            .orElseGet(() -> {
+                                Order newOrder = buildMemberOrder(member, req, now);
+                                return orderRepository.save(newOrder)
+                                        .toDto(req.email(), req.address(), req.postalCode());
+                            })
+                    )
+                    .orElseGet(() -> guestOrderRepository.findByEmailAndCreatedAtBetween(req.email(), start, end)
+                            .map(order -> mergeGuestOrder(order, req, now))
+                            .orElseGet(() -> {
+                                GuestOrder newOrder = buildGuestOrder(req, now);
+                                return guestOrderRepository.save(newOrder).toDto();
+                            })
+                    );
         }
     }
 
-    private OrderResponse toResponse(Order order, String email, String address, String postalCode) {
-        return new OrderResponse(
-                order.getId(),
-                email,
-                address,
-                postalCode,
-                order.getStatus(),
-                order.getCreatedAt(),
-                order.getOrderItems().stream().map(oi ->
-                        new OrderResponse.OrderItemResponse(
-                                oi.getProduct().getId(),
-                                oi.getProduct().getProductName(),
-                                oi.getProduct().getProductPrice(),
-                                oi.getQuantity()
-                        )
-                ).toList()
-        );
-    }
-
-    private OrderResponse toResponse(GuestOrder order) {
-        return new OrderResponse(
-                order.getId(),
-                order.getEmail(),
-                order.getAddress(),
-                order.getPostalCode(),
-                order.getStatus(),
-                order.getCreatedAt(),
-                order.getItems().stream().map(oi ->
-                        new OrderResponse.OrderItemResponse(
-                                oi.getProduct().getId(),
-                                oi.getProduct().getProductName(),
-                                oi.getProduct().getProductPrice(),
-                                oi.getQuantity()
-                        )
-                ).toList()
-        );
-    }
 }
-
-//@Transactional
-//public OrderResponse getOrder(Long id) {
-//    return toResponse(find(id));
-//}
-//
-//
-//@Transactional
-//public List<OrderResponse> listOrders() {
-//    return orderRepository.findAll().stream().map(this::toResponse).toList();
-//}
-//
-//
-//public OrderResponse updateOrder(Long id, OrderUpdateRequest req) {
-//    Order o = find(id);
-//
-//    if (req.getEmail() != null) o.setEmail(req.getEmail());
-//    if (req.getAddress() != null) o.setAddress(req.getAddress());
-//    if (req.getZipcode() != null) o.setZipcode(req.getZipcode());
-//    if (req.getStatus() != null) o.setStatus(req.getStatus());
-//    if (req.getTotalPrice() != null) o.setTotalPrice(req.getTotalPrice());
-//
-//    return toResponse(o);
-//}
-//
-//
-//public void deleteOrder(Long id) {
-//    if (!orderRepository.existsById(id)) throw new NoSuchElementException("order " + id + " not found");
-//    orderRepository.deleteById(id);
-//}
-//
-//
-//private Order find(Long id){
-//    return orderRepository.findById(id)
-//            .orElseThrow(() -> new NoSuchElementException("order " + id + " not found"));
-//}

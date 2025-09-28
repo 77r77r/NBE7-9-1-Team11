@@ -1,17 +1,47 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { fetchMyPage, updateMyPage } from "@/lib/api";
+import { fetchMyPage, updateMyPage, fetchOrdersByEmail } from "@/lib/api";
 import { storage } from "@/lib/storage";
-import type { User } from "@/types";
+import type { User, Order } from "@/types";
 
 export default function MyPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(storage.getUser());
   const [msg, setMsg] = useState("");
 
+  // 주문 목록 상태
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState<boolean>(false);
+  const [ordersError, setOrdersError] = useState<string>("");
+
   useEffect(() => {
-    fetchMyPage().then(setUser).catch(() => setUser(storage.getUser()));
+    // 1) 내 정보 동기화
+    fetchMyPage()
+      .then((u) => {
+        setUser(u);
+        return u;
+      })
+      .catch(() => {
+        const u = storage.getUser();
+        setUser(u ?? null);
+        return u ?? null;
+      })
+      // 2) 내 정보가 있으면 주문 목록 조회 (최신순 정렬)
+      .then(async (u) => {
+        if (!u?.email) return;
+        try {
+          setOrdersLoading(true);
+          setOrdersError("");
+          const list = await fetchOrdersByEmail(u.email);
+          const sorted = (Array.isArray(list) ? list : []).sort((a, b) => Number(b.id) - Number(a.id));
+          setOrders(sorted);
+        } catch (e: any) {
+          setOrdersError(e?.message || "주문 목록을 불러오지 못했습니다.");
+        } finally {
+          setOrdersLoading(false);
+        }
+      });
   }, []);
 
   if (!user) {
@@ -39,13 +69,14 @@ export default function MyPage() {
     setMsg("저장되었습니다.");
     setTimeout(() => {
       setMsg("");
-      router.push("/");                // ✅ 저장 성공 후 메인 전환
+      router.push("/"); // 저장 성공 후 메인 전환
     }, 800);
   }
 
   return (
-    <main className="container p-4" style={{maxWidth: 560}}>
+    <main className="container p-4" style={{ maxWidth: 720 }}>
       <h2>마이페이지</h2>
+
       <div className="mb-2">
         <label className="form-label">이메일</label>
         <input className="form-control" value={user.email} readOnly disabled />
@@ -62,8 +93,59 @@ export default function MyPage() {
         <label className="form-label">우편번호</label>
         <input className="form-control" name="postal_code" value={user.postal_code} onChange={onChange} />
       </div>
+
       <button className="btn btn-dark" onClick={save}>저장</button>
       {msg && <div className="text-success mt-2">{msg}</div>}
+
+      {/* --- 주문 내역 섹션 --- */}
+      <section className="mt-5">
+        <h3>주문 내역</h3>
+
+        {ordersLoading && <div className="mt-2">불러오는 중…</div>}
+        {ordersError && <div className="text-danger mt-2">{ordersError}</div>}
+
+        {!ordersLoading && !ordersError && (
+          <>
+            {(!orders || orders.length === 0) ? (
+              <div className="text-muted mt-2">주문 내역이 없습니다.</div>
+            ) : (
+              <div className="table-responsive mt-3">
+                <table className="table table-sm align-middle">
+                  <thead>
+                    <tr>
+                      <th style={{ width: 100 }}>주문번호</th>
+                      <th style={{ width: 160 }}>주문일시</th>
+                      <th style={{ width: 120 }}>상태</th>
+                      <th>상품 / 수량</th>
+                      <th style={{ width: 120, textAlign: "right" }}>총액</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {orders.map((o) => (
+                      <tr key={String(o.id)}>
+                        <td>#{o.id}</td>
+                        <td>{o.createdAt ? new Date(o.createdAt).toLocaleString() : "-"}</td>
+                        <td>{o.status || "-"}</td>
+                        <td>
+                          <ul className="list-unstyled mb-0">
+                            {o.items.map((it, i) => (
+                              <li key={i} className="d-flex align-items-center gap-2">
+                                <span className="fw-semibold">{it.name}</span>
+                                <span className="badge text-bg-secondary">x{it.qty}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </td>
+                        <td style={{ textAlign: "right" }}>{(o.total ?? 0).toLocaleString()}원</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </>
+        )}
+      </section>
     </main>
   );
 }
