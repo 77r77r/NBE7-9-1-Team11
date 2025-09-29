@@ -12,9 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -64,14 +62,8 @@ public class OrderDetailsService {
             return "배송완료";
         }
 
-        // 오늘 14시 이전 주문 + 현재 시각이 14시 이후 → 배송중
-        boolean isTodayOrder = orderTime.toLocalDate().equals(LocalDate.now());
-        boolean isBefore14 = orderTime.toLocalTime().isBefore(LocalTime.of(14, 0));
-        boolean nowAfter14 = now.toLocalTime().isAfter(LocalTime.of(14, 0));
-
-        if (isTodayOrder && isBefore14 && nowAfter14) {
-            return "배송중";
-        }
+        LocalDateTime orderDay14 = orderTime.toLocalDate().atTime(14, 0);
+        if (orderTime.isBefore(orderDay14) && now.isAfter(orderDay14)) return "배송중";
 
         return "배송준비중";
     }
