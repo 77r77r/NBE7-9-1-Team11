@@ -121,7 +121,6 @@ public class MemberController {
         );
     }
 
-
     record MypageResBody(
             MemberDto memberDto
     ) {}
