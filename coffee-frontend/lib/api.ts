@@ -9,14 +9,14 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE || ""; // 비어있으면 더�
 const PATHS = {
   // 상품 (일반 + 관리자)
   productsList: "/product/list",
-  adminProducts: "/admin/products",
-  adminProductOne: (id: string) => `/admin/products/${id}`,
+  adminProducts: "/admin/product",
+  adminProductOne: (id: string) => `/admin/product/${id}`,
 
   // 주문
-  orderCreate: "/order",                    // POST
-  orderList: "/order",                      // GET (관리자/권한 필요) — 가정
-  orderOne: (id: string) => `/order/${id}`, // GET/PUT/DELETE — 가정
-  orderDetailsByEmail: "/order/details",    // GET ?email=
+  orderCreate: "/order",                         // POST (게스트/회원 공용 생성)
+  orderGuestDetails: "/order/details",           // GET ?email=  (비회원 조회)
+  orderMemberDetails: "/order/member/details",   // GET        (회원 조회)
+  orderAll: "/order/all",                              // GET        (관리자 전체 조회)
 
   // 회원
   signup: "/members/join",    // POST
@@ -25,50 +25,53 @@ const PATHS = {
   mypage: "/members/mypage",  // GET/PATCH
 };
 
-// --- [추가] 백엔드 → 프론트 표준 Order[] 정규화 유틸 ---
+// --- 백엔드 → 프론트 표준 Order[] 정규화 ---
 // 표준 아이템: name, qty, price(=단가). 합계는 Σ(price * qty)
 function normalizeOrdersFrom(raw: any): Order[] {
-  // 다양한 감싸기 형태 해제
+  // 다양한 래핑 필드 해제
   const arr =
     Array.isArray(raw) ? raw :
-    Array.isArray(raw?.orderDto) ? raw.orderDto :
-    Array.isArray(raw?.orders) ? raw.orders :
+    Array.isArray(raw?.orderDto) ? raw.orderDto :     // member/guest
+    Array.isArray(raw?.orders) ? raw.orders :         // admin(all)
     Array.isArray(raw?.orderList) ? raw.orderList :
     Array.isArray(raw?.content) ? raw.content :
     [];
 
-  return arr.map((o: any) => {
+  return arr.map((o: any, idx: number) => {
     const items: Array<{ productId: string; name: string; qty: number; price: number }> =
       (o.items ?? []).map((it: any) => {
         const qty = Number(it.quantity ?? it.qty ?? 0);
         const rawPrice = Number(it.price ?? 0);
-
-        // ✅ price가 라인합계로 오는 경우를 단가로 환산 (qty>0이고 price%qty==0 이면 라인합계 가능성 큼)
+        // price가 라인합계면 단가로 환산
         const unitPrice =
           qty > 0 && rawPrice > 0 && rawPrice % qty === 0
             ? Math.round(rawPrice / qty)
             : rawPrice;
-
         return {
           productId: String(it.productId ?? it.id ?? it.productName ?? ""),
           name: it.productName ?? it.name ?? (it.productId ?? "상품"),
           qty,
-          price: unitPrice, // 표준: 단가
+          price: unitPrice,
         };
       });
 
+    const createdAt = o.orderTime ?? o.createdAt ?? null;
     const computedTotal = items.reduce((s, it) => s + it.qty * it.price, 0);
+    // id가 없을 수 있음(admin 응답) → 시간/인덱스로 안정적 문자열 생성
+    const safeId =
+      o.orderId ?? o.id ??
+      (createdAt ? `t:${createdAt}` : `idx:${idx}`);
 
     return {
-      id: String(o.orderId ?? o.id ?? ""),
+      id: String(safeId),
       email: o.email ?? "",
       address: o.address ?? "",
-      postcode: o.postcode ?? o.zipcode ?? o.postalCode ?? "",
-      createdAt: o.orderTime ?? o.createdAt ?? null,
+      postcode: o.postalCode ?? o.postcode ?? o.zipcode ?? "",
+      createdAt,
       items,
       total: Number(o.total ?? o.totalPrice ?? computedTotal),
-      shipCategory: o.shipCategory ?? o.shippingStatus ?? "배송준비중",
-      status: o.status ?? "배송준비중",
+      shipCategory: o.shipCategory ?? o.shippingStatus ?? o.status ?? "배송준비중",
+      status: o.status ?? o.shippingStatus ?? o.shipCategory ?? "배송준비중",
     } as Order;
   });
 }
@@ -88,7 +91,7 @@ async function unwrapJson<T>(r: Response): Promise<T> {
 function j(o: any) { return JSON.stringify(o); }
 function isDummy() { return !API_BASE; }
 
-// ⬇︎ 인증 헤더 보강: 서버 구현 변주 대응 (Bearer, X-API-KEY, Api-Key 동시 세팅)
+// 인증 헤더(서버 변주 대응)
 function authHeaders(): HeadersInit {
   const u = storage.getUser();
   if (!u?.apiKey) return {};
@@ -101,9 +104,9 @@ function authHeaders(): HeadersInit {
 
 // ---------------- 더미 데이터 ----------------
 let DUMMY_PRODUCTS: Product[] = [
-  { id: "col-narino", name: "Columbia Nariñó", origin: "콜롬비아", price: 5000, imageUrl: "https://i.imgur.com/HKOFQYa.jpeg", stock: 100, active: true },
-  { id: "bra-serra",  name: "Brazil Serra Do Caparaó", origin: "브라질",   price: 6300, imageUrl: "https://i.imgur.com/HKOFQYa.jpeg", stock: 80,  active: true },
-  { id: "eth-yirg",   name: "Ethiopia Yirgacheffe",    origin: "에티오피아", price: 6800, imageUrl: "https://i.imgur.com/HKOFQYa.jpeg", stock: 60,  active: true },
+  { id: "col-narino", name: "Colombia Nariño",  origin: "콜롬비아",  price: 5100, imageUrl: "", stock: 100, active: true },
+  { id: "col-quindio",name: "Colombia Quindío", origin: "콜롬비아",  price: 5600, imageUrl: "", stock: 80,  active: true },
+  { id: "bra-serra",  name: "Brazil Serra Do Caparaó", origin: "브라질", price: 6300, imageUrl: "", stock: 60,  active: true },
 ];
 let DUMMY_ORDERS: Order[] = [];
 export const DUMMY_USERS: Array<User & { password: string }> = [
@@ -111,29 +114,24 @@ export const DUMMY_USERS: Array<User & { password: string }> = [
   { email: "admin@example.com",   password: "admin", nickname: "관리자", address: "서울시 종로구 관철동 1-1", postal_code: "03154", role: "admin" },
 ];
 
-// ★ 백엔드 payload → 프론트 User로 변환 (두 가지 스키마 모두 지원)
+// payload → User
 function toUserFromLoginPayload(body: any): User {
-  // A) { memberDto:{...}, apiKey:"..." }
-  // B) { email, name|nickname, address, postalCode|zipcode, authority|role, ... }
   const dto = body?.memberDto ?? body ?? {};
   const roleRaw = dto?.authority ?? dto?.role ?? "";
   const role = (String(roleRaw).toUpperCase() === "ADMIN") ? "admin" : "user";
-
   return {
     email: dto?.email ?? "",
     nickname: dto?.name ?? dto?.nickname ?? "",
     address: dto?.address ?? "",
     postal_code: dto?.postalCode ?? dto?.zipcode ?? "",
     role,
-    apiKey: body?.apiKey ?? body?.token ?? undefined, // 토큰 키명 변주 대비
+    apiKey: body?.apiKey ?? body?.token ?? undefined,
   };
 }
 
 // 1) 로그인 / 로그아웃 / 회원가입
-// 1-1) 로그인
 export async function login(email: string, password: string): Promise<User> {
   if (isDummy()) {
-    // 더미 로그인
     const u = DUMMY_USERS.find(x => x.email === email && x.password === password);
     if (!u) throw new Error("로그인 실패");
     const user: User = { email: u.email, nickname: u.nickname, address: u.address, postal_code: u.postal_code, role: u.role };
@@ -144,38 +142,30 @@ export async function login(email: string, password: string): Promise<User> {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: j({ email, password }),
-    credentials: "include", // 쿠키 수신
+    credentials: "include",
   });
-  if (!r.ok) {
-    const t = await r.text().catch(()=> "");
-    throw new Error(t || "로그인 실패");
-  }
-  const data = await unwrapJson<any>(r);     // RsData.data
-  const user = toUserFromLoginPayload(data); // 매핑
-  storage.setUser(user);                     // 저장 (apiKey 포함 가능)
+  if (!r.ok) throw new Error((await r.text().catch(()=> "")) || "로그인 실패");
+  const data = await unwrapJson<any>(r);
+  const user = toUserFromLoginPayload(data);
+  storage.setUser(user);
   return user;
 }
-
-// 1-2) 로그아웃
 export async function logout() {
   if (!isDummy()) {
     try {
       await fetch(join(API_BASE, PATHS.logout), {
         method: "DELETE",
-        credentials: "include",       // 쿠키 기반 로그아웃
-        headers: { ...authHeaders() },// 헤더 인증도 병행 지원
+        credentials: "include",
+        headers: { ...authHeaders() },
       });
     } catch {}
   }
   storage.clearUser();
 }
-
-// 1-3) 회원가입
 export async function signup(data: {
   email: string; password: string; nickname: string; address: string; postal_code: string;
 }): Promise<User> {
   if (isDummy()) {
-    // 더미 가입 → 즉시 로그인 처리
     if (DUMMY_USERS.some(x => x.email === data.email)) throw new Error("이미 존재하는 이메일");
     const nu: User & { password: string } = {
       email: data.email, password: data.password, nickname: data.nickname,
@@ -186,30 +176,21 @@ export async function signup(data: {
     storage.setUser(user);
     return user;
   }
-  const body = {
-    email: data.email,
-    password: data.password,
-    nickname: data.nickname,
-    address: data.address,
-    postalCode: data.postal_code,
-  };
+  const body = { email: data.email, password: data.password, nickname: data.nickname, address: data.address, postalCode: data.postal_code };
   const r = await fetch(join(API_BASE, PATHS.signup), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: j(body),
-    credentials: "include", // 가입 시 쿠키 내려줄 수 있음
+    credentials: "include",
   });
-  if (!r.ok) {
-    const t = await r.text().catch(()=> "");
-    throw new Error(t || "회원가입 실패");
-  }
+  if (!r.ok) throw new Error((await r.text().catch(()=> "")) || "회원가입 실패");
   const resp = await unwrapJson<any>(r);
   const user = toUserFromLoginPayload(resp);
   storage.setUser(user);
   return user;
 }
 
-// 1-4) 마이페이지 조회
+// 2) 마이페이지 조회/수정
 export async function fetchMyPage(): Promise<User> {
   if (isDummy()) {
     const u = storage.getUser(); if (!u) throw new Error("로그인 필요");
@@ -217,17 +198,15 @@ export async function fetchMyPage(): Promise<User> {
   }
   const r = await fetch(join(API_BASE, PATHS.mypage), {
     cache: "no-store",
-    credentials: "include",        // 쿠키 전송
-    headers: { ...authHeaders() }, // 헤더 인증 폴백
+    credentials: "include",
+    headers: { ...authHeaders() },
   });
   if (!r.ok) throw new Error("마이페이지 조회 실패");
   const data = await unwrapJson<any>(r);
   const user = toUserFromLoginPayload(data);
-  storage.setUser(user); // 최신 서버 값 동기화
+  storage.setUser(user);
   return user;
 }
-
-// 1-5) 마이페이지 수정 (주소/우편번호/닉네임)
 export async function updateMyPage(patch: { nickname?: string; address?: string; postal_code?: string; }): Promise<User> {
   if (isDummy()) {
     const u = storage.getUser(); if (!u) throw new Error("로그인 필요");
@@ -235,28 +214,21 @@ export async function updateMyPage(patch: { nickname?: string; address?: string;
     storage.setUser(merged);
     return merged;
   }
-  const body = {
-    nickname: patch.nickname,
-    address: patch.address,
-    postalCode: patch.postal_code,
-  };
+  const body = { nickname: patch.nickname, address: patch.address, postalCode: patch.postal_code };
   const r = await fetch(join(API_BASE, PATHS.mypage), {
     method: "PATCH",
     headers: { "Content-Type": "application/json", ...authHeaders() },
-    body: JSON.stringify(body),
-    credentials: "include", // 쿠키 전송
+    body: j(body),
+    credentials: "include",
   });
-  if (!r.ok) {
-    const t = await r.text().catch(()=> "");
-    throw new Error(t || "마이페이지 수정 실패");
-  }
+  if (!r.ok) throw new Error((await r.text().catch(()=> "")) || "마이페이지 수정 실패");
   const data = await unwrapJson<any>(r);
   const user = toUserFromLoginPayload(data);
   storage.setUser(user);
   return user;
 }
 
-// 2) 상품 목록
+// 3) 상품 목록
 export async function fetchProducts(): Promise<Product[]> {
   if (isDummy()) return [...DUMMY_PRODUCTS];
   const r = await fetch(join(API_BASE, PATHS.productsList), { cache: "no-store" });
@@ -264,152 +236,101 @@ export async function fetchProducts(): Promise<Product[]> {
   return await unwrapJson<Product[]>(r);
 }
 
-// 3) 주문: 생성 → { ok, id }로 통일
+// 4) 주문 생성
 export async function createOrder(draft: OrderDraft): Promise<{ ok: boolean; id?: string }> {
   if (isDummy()) {
     const id = `dummy-${Date.now()}`;
     const itemsDetailed = draft.items.map(it => {
-      const p = DUMMY_PRODUCTS.find(x => x.id === it.productId);
+      const p = DUMMY_PRODUCTS.find(x => String(x.id) === String(it.productId));
       return { productId: String(it.productId), name: p?.name || String(it.productId), qty: it.qty, price: p?.price || 0 };
     });
     const computedTotal = itemsDetailed.reduce((s, it) => s + it.qty * it.price, 0);
     DUMMY_ORDERS.unshift({
-      id,
-      email: draft.email,
-      address: draft.address,
-      postcode: draft.postcode,
-      items: itemsDetailed,
-      total: computedTotal,
-      shipCategory: draft.shipCategory,     // "배송준비중" 등
-      status: draft.shipCategory,           // 동일 체계로 통일
+      id, email: draft.email, address: draft.address, postcode: draft.postcode,
+      items: itemsDetailed, total: computedTotal,
+      status: draft.shipCategory, shipCategory: draft.shipCategory,
       createdAt: new Date().toISOString(),
     } as unknown as Order);
     return { ok: true, id };
   }
-
   const body = {
     email: draft.email,
     address: draft.address,
-    zipcode: draft.postcode,       // 서버가 zipcode만 받을 수도 있어서 둘 다 전송
-    postalCode: draft.postcode,    // 서버가 postalCode만 받을 수도 있어서 둘 다 전송
+    zipcode: draft.postcode,
+    postalCode: draft.postcode,
     totalPrice: draft.total,
     items: draft.items.map(it => {
-      // 백엔드가 숫자 productId를 기대한다면 안전 변환
-      const pid = (typeof it.productId === "string" && /^\d+$/.test(it.productId))
-        ? Number(it.productId)
-        : it.productId;
-      return {
-        productId: pid,
-        quantity: it.qty, // ✅ 백엔드가 읽는 필드명으로 전송
-      };
+      const pid = (typeof it.productId === "string" && /^\d+$/.test(it.productId)) ? Number(it.productId) : it.productId;
+      return { productId: pid, quantity: it.qty };
     }),
-    shipCategory: draft.shipCategory,     // "배송준비중|배송중|배송완료"
-    shippingStatus: draft.shipCategory,   // (선택) 백엔드가 새 키명을 도입했어도 대응
+    shipCategory: draft.shipCategory,
+    shippingStatus: draft.shipCategory,
   };
-
   const r = await fetch(join(API_BASE, PATHS.orderCreate), {
     method: "POST",
     headers: { "Content-Type": "application/json", ...authHeaders() },
-    body: JSON.stringify(body),
-    credentials: "include", // 쿠키 인증
+    body: j(body),
+    credentials: "include",
   });
-
   const raw = await r.text().catch(() => "");
   if (!r.ok) throw new Error(raw || "주문 실패");
-
-  let parsed: any = {};
-  try { parsed = raw ? JSON.parse(raw) : {}; } catch {}
+  let parsed: any = {}; try { parsed = raw ? JSON.parse(raw) : {}; } catch {}
   const data = parsed && typeof parsed === "object" && "data" in parsed ? parsed.data : parsed;
-
-  // 다양한 키 케이스 흡수
   const id = data?.id ?? data?.orderId ?? data?.orderID ?? data?.result?.id;
   return { ok: true, id };
 }
 
-// 4) 비회원 이메일 주문 목록 조회 (인증 헤더/쿠키 동시 지원)
+// 5) 주문 조회: 비회원(email) / 회원(세션) / 관리자(전체)
 export async function fetchOrdersByEmail(email: string): Promise<Order[]> {
   if (!email) return [];
   if (isDummy()) return DUMMY_ORDERS.filter(o => o.email === email);
+  const url = `${join(API_BASE, PATHS.orderGuestDetails)}?email=${encodeURIComponent(email)}`;
+  const r = await fetch(url, { cache: "no-store", credentials: "include", headers: { ...authHeaders() } });
+  if (!r.ok) throw new Error("주문 조회 실패");
+  return normalizeOrdersFrom(await unwrapJson<any>(r));
+}
 
-  const url = `${join(API_BASE, PATHS.orderDetailsByEmail)}?email=${encodeURIComponent(email)}`;
-  const r = await fetch(url, {
+// 회원(세션 기반) 주문 조회
+export async function fetchOrdersForMember(): Promise<Order[]> {
+  if (isDummy()) {
+    const u = storage.getUser(); if (!u) return [];
+    return DUMMY_ORDERS.filter(o => o.email === u.email);
+  }
+  const r = await fetch(join(API_BASE, PATHS.orderMemberDetails), {
     cache: "no-store",
     credentials: "include",
     headers: { ...authHeaders() },
   });
-  if (!r.ok) throw new Error("주문 조회 실패");
-
-  // RsData의 data만 파싱 → 표준화
-  const raw = await unwrapJson<any>(r);
-  return normalizeOrdersFrom(raw);
+  if (!r.ok) throw new Error("회원 주문 조회 실패");
+  return normalizeOrdersFrom(await unwrapJson<any>(r));
 }
 
-// 5) 관리자 통계 — 프론트 계산
-export async function adminFetchStats(): Promise<{
-  revenue: number; byProduct: Array<{ productId: string; name: string; qty: number; amount: number }>;
-}> {
-  const orders = await adminFetchOrders(); // 전체 주문 가져와서
-  let revenue = 0;
-  const map = new Map<string, { name: string; qty: number; amount: number }>();
-  for (const o of orders) {
-    revenue += o.total || 0;
-    for (const it of o.items) {
-      const v = map.get(it.productId) || { name: it.name, qty: 0, amount: 0 };
-      v.qty += it.qty;
-      v.amount += it.qty * it.price;
-      map.set(it.productId, v);
-    }
-  }
-  return { revenue, byProduct: [...map].map(([productId, v]) => ({ productId, ...v })) };
-}
-
-// 6) 관리자: 주문 목록/단건/상태변경(업데이트)
-// ※ 백엔드 미구현 상태 가정 — 응답 형식 불명확시 normalizeOrdersFrom로 정규화
+// 관리자: 전체 주문
 export async function adminFetchOrders(): Promise<Order[]> {
   if (isDummy()) return [...DUMMY_ORDERS];
-  const r = await fetch(join(API_BASE, PATHS.orderList), {
+  const r = await fetch(join(API_BASE, PATHS.orderAll), {
     cache: "no-store",
     credentials: "include",
     headers: { ...authHeaders() },
   });
   if (!r.ok) throw new Error("관리자 주문 목록 조회 실패");
-  const raw = await unwrapJson<any>(r);
-  return normalizeOrdersFrom(raw);
-}
-export async function adminFetchOrder(id: string): Promise<Order> {
-  if (isDummy()) {
-    const o = DUMMY_ORDERS.find(x => String(x.id) === String(id));
-    if (!o) throw new Error("주문 없음");
-    return o;
-  }
-  const r = await fetch(join(API_BASE, PATHS.orderOne(id)), {
-    cache: "no-store",
-    credentials: "include",
-    headers: { ...authHeaders() },
-  });
-  if (!r.ok) throw new Error("주문 단건 조회 실패");
-  const raw = await unwrapJson<any>(r);
-  const list = normalizeOrdersFrom(raw);
-  if (!list.length) throw new Error("주문 없음");
-  return list[0];
-}
-// 명세엔 '상태 변경' 전용 엔드포인트가 없으면 PUT /order/{id}로 업데이트
-export async function adminUpdateOrderStatus(orderId: string, status: OrderStatus): Promise<boolean> {
-  if (isDummy()) {
-    const i = DUMMY_ORDERS.findIndex(o => String(o.id) === String(orderId));
-    if (i >= 0) DUMMY_ORDERS[i].status = status;
-    return true;
-  }
-  const r = await fetch(join(API_BASE, PATHS.orderOne(orderId)), {
-    method: "PUT",
-    headers: { "Content-Type": "application/json", ...authHeaders() },
-    body: j({ status }),
-    credentials: "include",
-  });
-  return r.ok;
+  return normalizeOrdersFrom(await unwrapJson<any>(r));
 }
 
-// 7) 관리자: 상품 등록/수정/삭제
+// (선택) 단건/상태변경 — 서버 구현시 맞춰 사용
+export async function adminFetchOrder(id: string): Promise<Order> {
+  const list = await adminFetchOrders();
+  const found = list.find(o => String(o.id) === String(id) || String(o.createdAt) === String(id));
+  if (!found) throw new Error("주문 없음");
+  return found;
+}
+export async function adminUpdateOrderStatus(orderId: string, status: OrderStatus): Promise<boolean> {
+  // 실제 엔드포인트가 준비되면 여기서 호출하도록 변경
+  console.warn("PUT /order/{id} 준비되면 이 함수 연결하세요");
+  return true;
+}
+
+// 6) 관리자: 상품 등록/수정/삭제
 type AdminCreatePayload = { productname: string; productPrice: number; origin: string; stock: number; imgUrl: string; active?: boolean; };
 
 export async function adminFetchProducts(): Promise<Product[]> {
@@ -438,10 +359,7 @@ export async function adminCreateProduct(payload: AdminCreatePayload): Promise<P
     body: j(payload),
     credentials: "include",
   });
-  if (!r.ok) {
-    const t = await r.text().catch(()=> "");
-    throw new Error(t || "상품 등록 실패");
-  }
+  if (!r.ok) throw new Error((await r.text().catch(()=> "")) || "상품 등록 실패");
   return await unwrapJson<Product>(r);
 }
 export async function adminUpdateProduct(p: Product): Promise<boolean> {

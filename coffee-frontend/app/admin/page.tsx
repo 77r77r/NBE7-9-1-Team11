@@ -6,7 +6,7 @@ import { fetchProducts, adminDeleteProduct, adminFetchOrders } from "@/lib/api";
 import RefreshButton from "@/components/RefreshButton";
 
 export default function AdminPage() {
-  // --- 상품 관리 상태 ---
+  // --- 상품 관리 ---
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
@@ -14,7 +14,7 @@ export default function AdminPage() {
   async function loadProducts() {
     setLoading(true); setErr("");
     try {
-      const list = await fetchProducts(); // 메인 조회 API 재사용 (이미지 표시 X)
+      const list = await fetchProducts();
       setProducts(list);
     } catch (e: any) {
       setErr(e?.message || "조회 실패");
@@ -22,7 +22,6 @@ export default function AdminPage() {
       setLoading(false);
     }
   }
-
   async function handleDelete(id: string | number) {
     if (!confirm("정말 삭제하시겠어요?")) return;
     const ok = await adminDeleteProduct(String(id));
@@ -30,7 +29,7 @@ export default function AdminPage() {
     setProducts(prev => prev.filter(p => String(p.id) !== String(id)));
   }
 
-  // --- 주문 목록(가정) 상태 ---
+  // --- 주문 목록(전체) ---
   const [adminOrders, setAdminOrders] = useState<Order[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [ordersErr, setOrdersErr] = useState("");
@@ -38,8 +37,10 @@ export default function AdminPage() {
   async function loadOrders() {
     setOrdersLoading(true); setOrdersErr("");
     try {
-      const list = await adminFetchOrders();        // 백엔드 구현 가정
-      list.sort((a, b) => Number(b.id) - Number(a.id)); // 최신(id 큰 순) 정렬
+      const list = await adminFetchOrders(); // /all
+      list.sort((a, b) =>
+        new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+      );
       setAdminOrders(list);
     } catch (e: any) {
       setOrdersErr(e?.message || "주문 조회 실패");
@@ -52,7 +53,7 @@ export default function AdminPage() {
 
   return (
     <main className="container p-4">
-      {/* ===================== 상품 관리 ===================== */}
+      {/* ===== 상품 관리 ===== */}
       <div className="d-flex justify-content-between align-items-center">
         <h2>상품 관리</h2>
         <RefreshButton onClick={loadProducts} label="새로고침" />
@@ -85,10 +86,7 @@ export default function AdminPage() {
                 <td>{(p.price ?? 0).toLocaleString()}원</td>
                 <td>{p.stock ?? 0}</td>
                 <td className="text-end">
-                  <button
-                    className="btn btn-outline-danger btn-sm"
-                    onClick={() => handleDelete(p.id as any)}
-                  >
+                  <button className="btn btn-outline-danger btn-sm" onClick={() => handleDelete(p.id as any)}>
                     삭제
                   </button>
                 </td>
@@ -98,10 +96,10 @@ export default function AdminPage() {
         </table>
       </div>
 
-      {/* ===================== 주문 목록(가정) ===================== */}
+      {/* ===== 전체 주문 목록 ===== */}
       <section className="mt-5">
         <div className="d-flex justify-content-between align-items-center">
-          <h3>주문 목록</h3>
+          <h3>전체 주문 목록</h3>
           <RefreshButton onClick={loadOrders} label="새로고침" />
         </div>
 
@@ -112,8 +110,8 @@ export default function AdminPage() {
           <table className="table table-sm align-middle">
             <thead>
               <tr>
-                <th style={{width:90}}>ID</th>
-                <th style={{width:160}}>주문시각</th>
+                <th style={{width:220}}>이메일</th>
+                <th style={{width:160}}>주문일시</th>
                 <th style={{width:120}}>상태</th>
                 <th>상품 / 수량</th>
                 <th style={{width:120, textAlign:"right"}}>총액</th>
@@ -123,9 +121,9 @@ export default function AdminPage() {
               {adminOrders.length === 0 && (
                 <tr><td colSpan={5} className="text-muted">주문이 없습니다.</td></tr>
               )}
-              {adminOrders.map(o => (
-                <tr key={String(o.id)}>
-                  <td>#{o.id}</td>
+              {adminOrders.map((o, row) => (
+                <tr key={`${o.id}-${row}`}>
+                  <td>{o.email || "-"}</td>
                   <td>{o.createdAt ? new Date(o.createdAt).toLocaleString() : "-"}</td>
                   <td>{o.status ?? "-"}</td>
                   <td>

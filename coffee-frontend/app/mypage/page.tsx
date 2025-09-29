@@ -1,7 +1,8 @@
+// app/mypage/page.tsx
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { fetchMyPage, updateMyPage, fetchOrdersByEmail } from "@/lib/api";
+import { fetchMyPage, updateMyPage, fetchOrdersForMember } from "@/lib/api";
 import { storage } from "@/lib/storage";
 import type { User, Order } from "@/types";
 
@@ -10,31 +11,21 @@ export default function MyPage() {
   const [user, setUser] = useState<User | null>(storage.getUser());
   const [msg, setMsg] = useState("");
 
-  // 주문 목록 상태
   const [orders, setOrders] = useState<Order[]>([]);
-  const [ordersLoading, setOrdersLoading] = useState<boolean>(false);
-  const [ordersError, setOrdersError] = useState<string>("");
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [ordersError, setOrdersError] = useState("");
 
   useEffect(() => {
-    // 1) 내 정보 동기화
     fetchMyPage()
-      .then((u) => {
-        setUser(u);
-        return u;
-      })
-      .catch(() => {
-        const u = storage.getUser();
-        setUser(u ?? null);
-        return u ?? null;
-      })
-      // 2) 내 정보가 있으면 주문 목록 조회 (최신순 정렬)
+      .then((u) => { setUser(u); return u; })
+      .catch(() => { const u = storage.getUser(); setUser(u ?? null); return u ?? null; })
       .then(async (u) => {
-        if (!u?.email) return;
+        if (!u) return;
         try {
-          setOrdersLoading(true);
-          setOrdersError("");
-          const list = await fetchOrdersByEmail(u.email);
-          const sorted = (Array.isArray(list) ? list : []).sort((a, b) => Number(b.id) - Number(a.id));
+          setOrdersLoading(true); setOrdersError("");
+          const list = await fetchOrdersForMember(); // ✅ 회원 전용
+          const sorted = (Array.isArray(list) ? list : [])
+            .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
           setOrders(sorted);
         } catch (e: any) {
           setOrdersError(e?.message || "주문 목록을 불러오지 못했습니다.");
@@ -60,17 +51,10 @@ export default function MyPage() {
 
   async function save() {
     if (!user) return;
-    const saved = await updateMyPage({
-      nickname: user.nickname,
-      address: user.address,
-      postal_code: user.postal_code,
-    });
+    const saved = await updateMyPage({ nickname: user.nickname, address: user.address, postal_code: user.postal_code });
     setUser(saved);
     setMsg("저장되었습니다.");
-    setTimeout(() => {
-      setMsg("");
-      router.push("/"); // 저장 성공 후 메인 전환
-    }, 800);
+    setTimeout(() => { setMsg(""); router.push("/"); }, 800);
   }
 
   return (
@@ -97,7 +81,7 @@ export default function MyPage() {
       <button className="btn btn-dark" onClick={save}>저장</button>
       {msg && <div className="text-success mt-2">{msg}</div>}
 
-      {/* --- 주문 내역 섹션 --- */}
+      {/* --- 주문 내역 --- */}
       <section className="mt-5">
         <h3>주문 내역</h3>
 
