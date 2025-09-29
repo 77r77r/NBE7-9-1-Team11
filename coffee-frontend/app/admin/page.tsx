@@ -72,7 +72,7 @@ export default function AdminPage() {
               <th style={{width:160}}>원산지</th>
               <th style={{width:120}}>가격</th>
               <th style={{width:120}}>재고</th>
-              <th style={{width:120}}>전시</th>
+              <th style={{width:120}}>판매</th>
             </tr>
           </thead>
           <tbody>
@@ -86,7 +86,7 @@ export default function AdminPage() {
                 <td>{p.origin}</td>
                 <td>{(p.price ?? 0).toLocaleString()}원</td>
                 <td>{p.stock ?? 0}</td>
-                <td>{p.active ? "노출" : "숨김"}</td>
+                <td>{p.active ? "Y" : "N"}</td>
                 <td className="text-end">
                   <button className="btn btn-outline-danger btn-sm" onClick={() => handleDelete(p.id as any)}>
                     전환

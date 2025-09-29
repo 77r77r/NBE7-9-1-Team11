@@ -42,9 +42,9 @@ public class ProductService {
         return productRepository.findByProductName(productName);
     }
 
-    public void change(Product product) {
+    public Product change(Product product) {
         product.changeUseYn(!product.isUseYn());
-        productRepository.save(product);
+        return productRepository.save(product);
     }
 
     public void moidfy(Product product, String productName, int productPrice, String origin, int stock, String imgUrl) {

@@ -51,7 +51,7 @@ public class ProductServiceTest {
         assertThat(product).isNotNull();
         assertThat(product.isUseYn()).isTrue();
 
-        productService.delete(product);
+        productService.change(product);
 
         Product deletedProduct = productService.findById(id).orElse(null);
         assertThat(deletedProduct).isNotNull();
