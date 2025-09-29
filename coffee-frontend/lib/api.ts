@@ -335,7 +335,7 @@ type AdminCreatePayload = { productname: string; productPrice: number; origin: s
 
 export async function adminFetchProducts(): Promise<Product[]> {
   if (isDummy()) return [...DUMMY_PRODUCTS];
-  const r = await fetch(join(API_BASE, PATHS.productsList), {
+  const r = await fetch(join(API_BASE, PATHS.adminProducts), {
     cache: "no-store",
     credentials: "include",
     headers: { ...authHeaders() },

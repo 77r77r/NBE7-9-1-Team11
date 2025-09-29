@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { Product, Order } from "@/types";
-import { fetchProducts, adminDeleteProduct, adminFetchOrders } from "@/lib/api";
+import {fetchProducts, adminDeleteProduct, adminFetchOrders, adminFetchProducts} from "@/lib/api";
 import RefreshButton from "@/components/RefreshButton";
 
 export default function AdminPage() {
@@ -14,7 +14,7 @@ export default function AdminPage() {
   async function loadProducts() {
     setLoading(true); setErr("");
     try {
-      const list = await fetchProducts();
+      const list = await adminFetchProducts();
       setProducts(list);
     } catch (e: any) {
       setErr(e?.message || "조회 실패");
@@ -23,10 +23,11 @@ export default function AdminPage() {
     }
   }
   async function handleDelete(id: string | number) {
-    if (!confirm("정말 삭제하시겠어요?")) return;
+    if (!confirm("정말 전환 하시겠어요?")) return;
     const ok = await adminDeleteProduct(String(id));
-    if (!ok) { alert("삭제 실패"); return; }
-    setProducts(prev => prev.filter(p => String(p.id) !== String(id)));
+    if (!ok) { alert("전환 실패"); return; }
+    // setProducts(prev => prev.filter(p => String(p.id) !== String(id)));
+    await loadProducts();
   }
 
   // --- 주문 목록(전체) ---
@@ -71,7 +72,7 @@ export default function AdminPage() {
               <th style={{width:160}}>원산지</th>
               <th style={{width:120}}>가격</th>
               <th style={{width:120}}>재고</th>
-              <th style={{width:120}}>관리</th>
+              <th style={{width:120}}>판매</th>
             </tr>
           </thead>
           <tbody>
@@ -85,9 +86,10 @@ export default function AdminPage() {
                 <td>{p.origin}</td>
                 <td>{(p.price ?? 0).toLocaleString()}원</td>
                 <td>{p.stock ?? 0}</td>
+                <td>{p.active ? "Y" : "N"}</td>
                 <td className="text-end">
                   <button className="btn btn-outline-danger btn-sm" onClick={() => handleDelete(p.id as any)}>
-                    삭제
+                    전환
                   </button>
                 </td>
               </tr>

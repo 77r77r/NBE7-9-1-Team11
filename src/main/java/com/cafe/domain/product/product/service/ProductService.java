@@ -16,11 +16,7 @@ public class ProductService {
 
 
     public Product register(String productName, int productPrice, String origin, int stock, String imgUrl) {
-        return productRepository.save(new Product(productName, productPrice, origin, stock, imgUrl));
-    }
-
-    public Product register(Product product) {
-        return productRepository.save(product);
+        return productRepository.save(new Product(productName, productPrice, origin, stock, imgUrl, true));
     }
 
 
@@ -33,9 +29,6 @@ public class ProductService {
         return productRepository.findAll();
     }
 
-    public boolean existsById(Long id) {
-        return productRepository.existsById(id);
-    }
 
     public boolean existsByProductName(String productName) {
         return productRepository.existsByProductName(productName);
@@ -49,8 +42,13 @@ public class ProductService {
         return productRepository.findByProductName(productName);
     }
 
-    public void deleteProduct(Product product) {
-        productRepository.delete(product);
+    public Product change(Product product) {
+        product.changeUseYn(!product.isUseYn());
+        return productRepository.save(product);
+    }
+
+    public void moidfy(Product product, String productName, int productPrice, String origin, int stock, String imgUrl) {
+        product.update(productName, productPrice, origin, stock, imgUrl);
     }
 
 

@@ -8,7 +8,8 @@ public record ProductDto(
         String origin,
         int price,
         int stock,
-        String imageUrl
+        String imageUrl,
+        boolean active
 ) {
     public ProductDto(Product product) {
         this(
@@ -17,7 +18,8 @@ public record ProductDto(
                 product.getProductOrigin(),
                 product.getProductPrice(),
                 product.getProductStock(),
-                product.getImageUrl()
+                product.getImageUrl(),
+                product.isUseYn()
         );
     }
 }
