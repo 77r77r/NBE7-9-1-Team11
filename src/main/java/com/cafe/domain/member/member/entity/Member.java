@@ -46,12 +46,6 @@ public class Member extends BaseEntity {
         this.authority = "ADMIN";
     }
 
-    // 주문내역 추가, 주문 발생 시 member.addOrder(order)로 호출
-    public void addOrder(Order order) {
-        orders.add(order);
-        order.setMember(this);
-    }
-
     public void modifyPassword(String password) { this.password = password; }
 
     public void modifyNickname(String nickname) { this.nickname = nickname; }
