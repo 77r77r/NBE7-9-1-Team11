@@ -20,16 +20,15 @@ public class Rq {
 
     public Member getMember() {
 
-        String apiKey = null;
-        String authorization = request.getHeader("Authorization");
+        String apiKey = request.getHeader("Authorization");
 
-        if(authorization != null && !authorization.isEmpty()) {
+        if(apiKey != null && !apiKey.isEmpty()) {
 
-            if (!authorization.startsWith("Bearer ")) {
+            if (!apiKey.startsWith("Bearer ")) {
                 throw new ServiceException("401-2", "헤더의 인증 정보 형식이 올바르지 않습니다.");
             }
 
-            apiKey = authorization.replace("Bearer ", "");
+            apiKey = apiKey.replace("Bearer ", "");
 
         } else {
 
