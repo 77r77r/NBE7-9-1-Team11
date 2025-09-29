@@ -1,4 +1,3 @@
-// components/GuestOrderLookup.tsx
 "use client";
 
 import { useState } from "react";
@@ -17,7 +16,8 @@ export default function GuestOrderLookup() {
     setLoading(true); setErr("");
     try {
       const list = await fetchOrdersByEmail(email);
-      const sorted = (Array.isArray(list) ? list : []).sort((a, b) => Number(b.id) - Number(a.id));
+      const sorted = (Array.isArray(list) ? list : [])
+        .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
       setOrders(sorted);
     } catch (e: any) {
       setErr(e?.message || "조회 실패");
@@ -30,12 +30,7 @@ export default function GuestOrderLookup() {
     <div className="card p-3">
       <h5 className="mb-3">비회원 주문 조회</h5>
       <div className="d-flex gap-2">
-        <input
-          className="form-control"
-          placeholder="이메일 입력"
-          value={email}
-          onChange={e => setEmail(e.target.value)}
-        />
+        <input className="form-control" placeholder="이메일 입력" value={email} onChange={e => setEmail(e.target.value)} />
         <button className="btn btn-primary" onClick={load}>조회</button>
         <RefreshButton onClick={load} label="새로고침" />
       </div>
@@ -51,16 +46,15 @@ export default function GuestOrderLookup() {
               <th style={{width:160}}>주문일시</th>
               <th>상품 / 수량</th>
               <th style={{width:120, textAlign:"right"}}>총액</th>
-              <th style={{width:120}}>발송구분</th>
               <th style={{width:120}}>상태</th>
             </tr>
           </thead>
           <tbody>
             {orders.length === 0 && (
-              <tr><td colSpan={6} className="text-muted">조회 결과가 없습니다.</td></tr>
+              <tr><td colSpan={5} className="text-muted">조회 결과가 없습니다.</td></tr>
             )}
-            {orders.map(o => (
-              <tr key={o.id}>
+            {orders.map((o, row) => (
+              <tr key={`${o.id}-${row}`}>
                 <td>#{o.id}</td>
                 <td>{o.createdAt ? new Date(o.createdAt).toLocaleString() : "-"}</td>
                 <td>
@@ -68,13 +62,12 @@ export default function GuestOrderLookup() {
                     {o.items.map((it, i) => (
                       <li key={i} className="d-flex align-items-center gap-2">
                         <span className="fw-semibold">{it.name}</span>
-                        <span className="badge text-bg-secondary">x{it.qty}</span>
+                        <span className="badge bg-secondary">x{it.qty}</span>
                       </li>
                     ))}
                   </ul>
                 </td>
                 <td style={{textAlign:"right"}}>{(o.total ?? 0).toLocaleString()}원</td>
-                <td>{o.shipCategory ?? "-"}</td>
                 <td>{o.status ?? "-"}</td>
               </tr>
             ))}

@@ -16,7 +16,8 @@ export default function OrderDetailsPage() {
     setLoading(true); setErr("");
     try {
       const list = await fetchOrdersByEmail(email);
-      const sorted = (Array.isArray(list) ? list : []).sort((a, b) => Number(b.id) - Number(a.id));
+      const sorted = (Array.isArray(list) ? list : [])
+        .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
       setOrders(sorted);
     } catch (e: any) {
       setErr(e?.message || "조회 실패");
@@ -50,13 +51,12 @@ export default function OrderDetailsPage() {
               <th style={{width:160}}>주문일시</th>
               <th>상품 / 수량</th>
               <th style={{width:120, textAlign:"right"}}>총액</th>
-              <th style={{width:120}}>발송구분</th>
               <th style={{width:120}}>상태</th>
             </tr>
           </thead>
           <tbody>
             {orders.length === 0 && (
-              <tr><td colSpan={6} className="text-muted">조회 결과가 없습니다.</td></tr>
+              <tr><td colSpan={5} className="text-muted">조회 결과가 없습니다.</td></tr>
             )}
             {orders.map(o => (
               <tr key={o.id}>
@@ -67,13 +67,12 @@ export default function OrderDetailsPage() {
                     {o.items.map((it, i) => (
                       <li key={i} className="d-flex align-items-center gap-2">
                         <span className="fw-semibold">{it.name}</span>
-                        <span className="badge text-bg-secondary">x{it.qty}</span>
+                        <span className="badge bg-light border !text-black">x{it.qty}</span>
                       </li>
                     ))}
                   </ul>
                 </td>
                 <td style={{textAlign:"right"}}>{(o.total ?? 0).toLocaleString()}원</td>
-                <td>{o.shipCategory ?? "-"}</td>
                 <td>{o.status ?? "-"}</td>
               </tr>
             ))}

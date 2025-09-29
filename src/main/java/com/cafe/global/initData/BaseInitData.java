@@ -102,7 +102,7 @@ public class BaseInitData {
 
 
         // 배송 상태 테스트용 주문 데이터 (회원)
-        // 배송중: 오늘 13시 주문
+        // 배송중
         OrderCreateRequest before2PMOrder = new OrderCreateRequest(
                 "gen@init.com",
                 "경기도 성남시",
@@ -110,9 +110,9 @@ public class BaseInitData {
                 List.of(new OrderCreateRequest.Item(product1.getId(), 2))
         );
         orderService.createOrder(before2PMOrder, member.getApiKey(),
-                LocalDateTime.now().withHour(13).withMinute(0));
+                LocalDateTime.now().minusDays(1).withHour(13).withMinute(0));
 
-        // 배송준비중: 오늘 15시 주문
+        // 배송준비중: 오늘 8시 주문
         OrderCreateRequest after2PMOrder = new OrderCreateRequest(
                 "gen@init.com",
                 "경기도 성남시",
@@ -120,7 +120,7 @@ public class BaseInitData {
                 List.of(new OrderCreateRequest.Item(product2.getId(), 3))
         );
         orderService.createOrder(after2PMOrder, member.getApiKey(),
-                LocalDateTime.now().withHour(15).withMinute(0));
+                LocalDateTime.now().withHour(8).withMinute(0));
 
         // 배송완료: 3일 전 주문
         OrderCreateRequest oldOrderReq = new OrderCreateRequest(
@@ -134,7 +134,7 @@ public class BaseInitData {
         orderService.createOrder(
                 oldOrderReq,
                 member.getApiKey(),
-                LocalDateTime.now().minusDays(3).withHour(15).withMinute(0)
+                LocalDateTime.now().minusDays(4).withHour(15).withMinute(0)
         );
 
 
@@ -152,7 +152,7 @@ public class BaseInitData {
         orderService.createOrder(guestOrderRequest, null); // apiKey 없이 → 비회원 주문
 
         // 비회원 배송 상태 테스트
-        // 배송중: 오늘 13시 주문
+        // 배송중
         OrderCreateRequest guestBefore2PM = new OrderCreateRequest(
                 "guest@init.com",
                 "서울시 강남구",
@@ -160,9 +160,9 @@ public class BaseInitData {
                 List.of(new OrderCreateRequest.Item(product1.getId(), 1))
         );
         orderService.createOrder(guestBefore2PM, null,
-                LocalDateTime.now().withHour(13).withMinute(0));
+                LocalDateTime.now().minusDays(1).withHour(13).withMinute(0));
 
-        // 배송준비중: 오늘 15시 주문
+        // 배송준비중
         OrderCreateRequest guestAfter2PM = new OrderCreateRequest(
                 "guest@init.com",
                 "서울시 강남구",
@@ -170,9 +170,9 @@ public class BaseInitData {
                 List.of(new OrderCreateRequest.Item(product2.getId(), 2))
         );
         orderService.createOrder(guestAfter2PM, null,
-                LocalDateTime.now().withHour(15).withMinute(0));
+                LocalDateTime.now().withHour(10).withMinute(0));
 
-        // 배송완료: 3일 전 주문
+        // 배송완료
         OrderCreateRequest guestOldOrderReq = new OrderCreateRequest(
                 "guest@init.com",
                 "서울시 강남구",
@@ -182,7 +182,7 @@ public class BaseInitData {
         orderService.createOrder(
                 guestOldOrderReq,
                 null, // 비회원은 apiKey 없음
-                LocalDateTime.now().minusDays(3).withHour(15).withMinute(0)
+                LocalDateTime.now().minusDays(3).withHour(6).withMinute(0)
         );
     }
 
