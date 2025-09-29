@@ -35,7 +35,7 @@ public class ApiV1ProductController {
     }
 
     // 상품 목록 가져오기 - 관리자
-    @GetMapping("/admin/product/list")
+    @GetMapping("/admin/product")
     @Transactional(readOnly = true)
     @ResponseBody
     public List<ProductDto> getItemsAdmin() {
@@ -141,18 +141,29 @@ public class ApiV1ProductController {
 
         return productService.findById(id)
                 .map(product -> {
-                    productService.delete(product);
-                    return new RsData<>(
-                            String.valueOf(HttpStatus.OK.value()),
-                            "비활성화 되었습니다.",
-                            new ProductResBody(
-                                    new ProductDto(product)
-                            )
-                    );
+                    productService.change(product);
+                    if (!product.isUseYn()) {
+                        return new RsData<>(
+                                String.valueOf(HttpStatus.OK.value()),
+                                "비활성화 되었습니다.",
+                                new ProductResBody(
+                                        new ProductDto(product)
+                                )
+                        );
+                    }
+                    else {
+                        return new RsData<>(
+                                String.valueOf(HttpStatus.OK.value()),
+                                "활성화 되었습니다.",
+                                new ProductResBody(
+                                        new ProductDto(product)
+                                )
+                        );
+                    }
                 })
                 .orElseGet(() -> new RsData<>(
                         String.valueOf(HttpStatus.NOT_FOUND.value()),
-                        "이미 삭제된 항목 입니다."
+                        "존재하지 않는 상품입니다."
                 ));
     }
 

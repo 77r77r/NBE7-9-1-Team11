@@ -9,7 +9,7 @@ public record ProductDto(
         int price,
         int stock,
         String imageUrl,
-        boolean useYn
+        boolean active
 ) {
     public ProductDto(Product product) {
         this(

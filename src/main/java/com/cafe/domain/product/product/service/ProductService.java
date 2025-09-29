@@ -42,8 +42,8 @@ public class ProductService {
         return productRepository.findByProductName(productName);
     }
 
-    public void delete(Product product) {
-        product.changeUseYn(false);
+    public void change(Product product) {
+        product.changeUseYn(!product.isUseYn());
         productRepository.save(product);
     }
 
