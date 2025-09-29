@@ -62,7 +62,7 @@ export default function GuestOrderLookup() {
                     {o.items.map((it, i) => (
                       <li key={i} className="d-flex align-items-center gap-2">
                         <span className="fw-semibold">{it.name}</span>
-                        <span className="badge text-bg-secondary">x{it.qty}</span>
+                        <span className="badge bg-secondary">x{it.qty}</span>
                       </li>
                     ))}
                   </ul>
