@@ -2,6 +2,7 @@ package com.cafe.domain.product.product.controller;
 
 import com.cafe.domain.product.product.dto.ProductDto;
 import com.cafe.domain.product.product.dto.ProductResBody;
+import com.cafe.domain.product.product.entity.Product;
 import com.cafe.domain.product.product.service.ProductService;
 import com.cafe.global.rsData.RsData;
 import jakarta.validation.Valid;
@@ -22,11 +23,22 @@ public class ApiV1ProductController {
     private final ProductService productService;
     private final StringHttpMessageConverter stringHttpMessageConverter;
 
-    // 상품 가져오기
+    // 상품 목록 가져오기 - 사용자
     @GetMapping("/product/list")
     @Transactional(readOnly = true)
     @ResponseBody
     public List<ProductDto> getItems() {
+        return productService.findAll().stream()
+                .filter(Product::isUseYn)
+                .map(ProductDto::new)
+                .toList();
+    }
+
+    // 상품 목록 가져오기 - 관리자
+    @GetMapping("/admin/product/list")
+    @Transactional(readOnly = true)
+    @ResponseBody
+    public List<ProductDto> getItemsAdmin() {
         return productService.findAll().stream()
                 .map(ProductDto::new)
                 .toList();
@@ -38,7 +50,7 @@ public class ApiV1ProductController {
      * @param id
      * @return
      */
-    @GetMapping("/admin/products/{id}")
+    @GetMapping("/admin/product/{id}")
     @Transactional(readOnly = true)
     @ResponseBody
     public RsData<ProductResBody> getItem(
@@ -85,7 +97,7 @@ public class ApiV1ProductController {
      * @param reqBody
      * @return
      */
-    @PostMapping("/admin/products")
+    @PostMapping("/admin/product")
     @Transactional
     @ResponseBody
     @ResponseStatus(HttpStatus.CREATED)
@@ -115,12 +127,12 @@ public class ApiV1ProductController {
 
 
     /**
-     * 상품 삭제
+     * 상품 삭제(비활성화)
      *
      * @param id
      * @return
      */
-    @DeleteMapping("/admin/products/{id}")
+    @DeleteMapping("/admin/product/{id}")
     @Transactional
     @ResponseBody
     public RsData<ProductResBody> deleteItem(
@@ -132,7 +144,7 @@ public class ApiV1ProductController {
                     productService.delete(product);
                     return new RsData<>(
                             String.valueOf(HttpStatus.OK.value()),
-                            "삭제되었습니다.",
+                            "비활성화 되었습니다.",
                             new ProductResBody(
                                     new ProductDto(product)
                             )
@@ -144,17 +156,14 @@ public class ApiV1ProductController {
                 ));
     }
 
-
-    record ProductModifyReqBody(
-            String name,
-            String origin,
-            int price,
-            int stock,
-            String imageUrl
-    ) {
-    }
-
-    @PutMapping("/admin/products/{id}")
+    /**
+     * 상품 수정
+     *
+     * @param id
+     * @param reqBody
+     * @return
+     */
+    @PutMapping("/admin/product/{id}")
     @Transactional
     @ResponseBody
     public RsData<ProductResBody> modifyItem(
@@ -174,13 +183,16 @@ public class ApiV1ProductController {
                     );
                 },
                 () -> {
-
+                    throw new RuntimeException("존재하지 않는 상품입니다.");
                 }
         );
 
         return new RsData<>(
                 String.valueOf(HttpStatus.OK.value()),
-                "수정었습니다."
+                "수정되었습니다.",
+                new ProductResBody(
+                        new ProductDto(productService.findById(id).get())
+                )
         );
     }
 

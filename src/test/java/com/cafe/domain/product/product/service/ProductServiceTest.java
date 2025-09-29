@@ -43,4 +43,19 @@ public class ProductServiceTest {
         assertThat(products).isEqualTo(productRepository.findAll());
     }
 
+    @Test
+    @DisplayName("상품삭제하기")
+    void t3() {
+        Long id = 1L;
+        Product product = productService.findById(id).orElse(null);
+        assertThat(product).isNotNull();
+        assertThat(product.isUseYn()).isTrue();
+
+        productService.delete(product);
+
+        Product deletedProduct = productService.findById(id).orElse(null);
+        assertThat(deletedProduct).isNotNull();
+        assertThat(deletedProduct.isUseYn()).isFalse();
+    }
+
 }
